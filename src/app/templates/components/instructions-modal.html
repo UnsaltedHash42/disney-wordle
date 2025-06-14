@@ -1,0 +1,188 @@
+<!-- Instructions Modal Content -->
+<div>
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">How to Play</h2>
+        <button @click="$parent.showInstructions = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Instructions content -->
+    <div class="space-y-6">
+        <!-- Basic rules -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Goal</h3>
+            <p class="text-gray-700">
+                Guess the hidden 5-letter word in 6 tries or fewer. Each guess must be a valid word.
+            </p>
+        </div>
+        
+        <!-- Feedback system -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Feedback System</h3>
+            <p class="text-gray-700 mb-4">
+                After each guess, the tiles will change to show how close your guess was:
+            </p>
+            
+            <div class="space-y-3">
+                <!-- Correct example -->
+                <div class="flex items-center space-x-3">
+                    <div class="flex space-x-1">
+                        <div class="tile tile-correct">W</div>
+                        <div class="tile tile-empty">O</div>
+                        <div class="tile tile-empty">R</div>
+                        <div class="tile tile-empty">D</div>
+                        <div class="tile tile-empty">S</div>
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        <strong>Blue with diagonal pattern:</strong> Letter is in the word and in the correct position
+                    </div>
+                </div>
+                
+                <!-- Present example -->
+                <div class="flex items-center space-x-3">
+                    <div class="flex space-x-1">
+                        <div class="tile tile-empty">W</div>
+                        <div class="tile tile-present">O</div>
+                        <div class="tile tile-empty">R</div>
+                        <div class="tile tile-empty">D</div>
+                        <div class="tile tile-empty">S</div>
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        <strong>Orange with reverse pattern:</strong> Letter is in the word but in the wrong position
+                    </div>
+                </div>
+                
+                <!-- Absent example -->
+                <div class="flex items-center space-x-3">
+                    <div class="flex space-x-1">
+                        <div class="tile tile-empty">W</div>
+                        <div class="tile tile-empty">O</div>
+                        <div class="tile tile-absent">R</div>
+                        <div class="tile tile-empty">D</div>
+                        <div class="tile tile-empty">S</div>
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        <strong>Gray:</strong> Letter is not in the word at all
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game modes -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Game Modes</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-semibold text-blue-600 mb-2">Classic Wordle</h4>
+                    <p class="text-sm text-gray-700">
+                        Traditional Wordle with ~2,300 common English words. Perfect for word game enthusiasts!
+                    </p>
+                </div>
+                
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-semibold text-orange-600 mb-2">Disney Wordle</h4>
+                    <p class="text-sm text-gray-700">
+                        Disney-themed words including characters, movies, locations, and magical concepts!
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Tips</h3>
+            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>Start with words that contain common vowels (A, E, I, O, U)</li>
+                <li>Use common consonants like R, S, T, L, N in your first few guesses</li>
+                <li>Pay attention to the keyboard color coding - it shows letter status across all guesses</li>
+                <li>Remember that letters can appear multiple times in a word</li>
+                <li>For Disney mode, think about character names, movie titles, and Disney vocabulary</li>
+            </ul>
+        </div>
+        
+        <!-- Accessibility features -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Accessibility Features</h3>
+            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li><strong>Color-blind friendly:</strong> Different patterns help distinguish correct, present, and absent letters</li>
+                <li><strong>Keyboard support:</strong> Use your physical keyboard to type and press Enter to submit</li>
+                <li><strong>High contrast:</strong> Works well with system high contrast modes</li>
+                <li><strong>Reduced motion:</strong> Respects your system's motion preferences</li>
+            </ul>
+        </div>
+        
+        <!-- Statistics -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Statistics</h3>
+            <p class="text-gray-700">
+                Track your progress with detailed statistics including win percentage, current streak, 
+                and guess distribution. Compete on the global leaderboard and share your results!
+            </p>
+        </div>
+        
+        <!-- Example game -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Example Game</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-700 mb-3">Let's say the hidden word is "HEART":</p>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <div class="flex space-x-1">
+                            <div class="tile tile-absent text-xs">A</div>
+                            <div class="tile tile-absent text-xs">D</div>
+                            <div class="tile tile-absent text-xs">I</div>
+                            <div class="tile tile-absent text-xs">E</div>
+                            <div class="tile tile-absent text-xs">U</div>
+                        </div>
+                        <span class="text-sm text-gray-600">ADIEU - No letters match</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="flex space-x-1">
+                            <div class="tile tile-absent text-xs">S</div>
+                            <div class="tile tile-present text-xs">T</div>
+                            <div class="tile tile-absent text-xs">O</div>
+                            <div class="tile tile-present text-xs">R</div>
+                            <div class="tile tile-absent text-xs">M</div>
+                        </div>
+                        <span class="text-sm text-gray-600">STORM - T and R are in the word, wrong positions</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="flex space-x-1">
+                            <div class="tile tile-correct text-xs">H</div>
+                            <div class="tile tile-present text-xs">E</div>
+                            <div class="tile tile-absent text-xs">L</div>
+                            <div class="tile tile-correct text-xs">R</div>
+                            <div class="tile tile-correct text-xs">T</div>
+                        </div>
+                        <span class="text-sm text-gray-600">HELRT - Getting closer!</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="flex space-x-1">
+                            <div class="tile tile-correct text-xs">H</div>
+                            <div class="tile tile-correct text-xs">E</div>
+                            <div class="tile tile-correct text-xs">A</div>
+                            <div class="tile tile-correct text-xs">R</div>
+                            <div class="tile tile-correct text-xs">T</div>
+                        </div>
+                        <span class="text-sm text-gray-600">HEART - Solved in 4 guesses! 🎉</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Close button -->
+        <div class="flex justify-center pt-4">
+            <button @click="$parent.showInstructions = false" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                Got it, let's play!
+            </button>
+        </div>
+    </div>
+</div>

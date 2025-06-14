@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wordle Clone - Classic and Disney Word Games">
+    <title>{% block title %}Wordle Clone{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS for color-blind accessibility -->
+    <style>
+        /* Color-blind friendly palette with patterns and textures */
+        :root {
+            /* Primary colors with high contrast */
+            --color-correct: #2563eb;     /* Blue - safe for all color blind types */
+            --color-present: #d97706;     /* Orange - distinguishable from blue */
+            --color-absent: #6b7280;      /* Gray - neutral */
+            --color-empty: #f3f4f6;       /* Light gray */
+            
+            /* Text colors for contrast */
+            --text-light: #ffffff;
+            --text-dark: #1f2937;
+            --text-muted: #6b7280;
+            
+            /* Background colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-dark: #1f2937;
+        }
+        
+        /* Game tile styles with patterns for accessibility */
+        .tile {
+            @apply w-14 h-14 border-2 border-gray-300 flex items-center justify-center text-xl font-bold transition-all duration-300;
+        }
+        
+        .tile-empty {
+            @apply bg-gray-50 text-gray-700;
+        }
+        
+        .tile-filled {
+            @apply bg-white text-gray-900 border-gray-400;
+        }
+        
+        /* Color-blind friendly feedback with patterns */
+        .tile-correct {
+            background: var(--color-correct);
+            color: var(--text-light);
+            border: 3px solid #1d4ed8;
+            /* Pattern overlay for extra distinction */
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px);
+        }
+        
+        .tile-present {
+            background: var(--color-present);
+            color: var(--text-light);
+            border: 3px solid #c2410c;
+            /* Different pattern for present letters */
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.1) 3px, rgba(255,255,255,0.1) 6px);
+        }
+        
+        .tile-absent {
+            background: var(--color-absent);
+            color: var(--text-light);
+            border: 3px solid #4b5563;
+            /* Solid for absent - no pattern needed */
+        }
+        
+        /* Keyboard styles matching tile colors */
+        .key {
+            @apply px-3 py-4 bg-gray-200 text-gray-800 font-semibold rounded transition-all duration-200 hover:bg-gray-300 cursor-pointer select-none;
+            min-width: 2.5rem;
+        }
+        
+        .key-correct {
+            background: var(--color-correct);
+            color: var(--text-light);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px);
+        }
+        
+        .key-present {
+            background: var(--color-present);
+            color: var(--text-light);
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.1) 3px, rgba(255,255,255,0.1) 6px);
+        }
+        
+        .key-absent {
+            background: var(--color-absent);
+            color: var(--text-light);
+        }
+        
+        /* Animation classes */
+        .flip-tile {
+            animation: flipTile 0.6s ease-in-out;
+        }
+        
+        .shake-row {
+            animation: shakeRow 0.5s ease-in-out;
+        }
+        
+        .bounce-tile {
+            animation: bounceTile 0.2s ease-in-out;
+        }
+        
+        @keyframes flipTile {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
+        }
+        
+        @keyframes shakeRow {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @keyframes bounceTile {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Stats and modal styles */
+        .modal-overlay {
+            @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+        }
+        
+        .modal-content {
+            @apply bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-screen overflow-y-auto;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 640px) {
+            .tile {
+                @apply w-12 h-12 text-lg;
+            }
+            
+            .key {
+                @apply px-2 py-3 text-sm;
+                min-width: 2rem;
+            }
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .tile-correct {
+                border-width: 4px;
+            }
+            
+            .tile-present {
+                border-width: 4px;
+            }
+            
+            .tile-absent {
+                border-width: 4px;
+            }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .tile {
+                transition: none;
+            }
+            
+            .flip-tile {
+                animation: none;
+            }
+            
+            .shake-row {
+                animation: none;
+            }
+            
+            .bounce-tile {
+                animation: none;
+            }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+        }
+        
+        /* Toast notifications */
+        .toast {
+            @apply fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+    </style>
+    
+    <!-- Custom JavaScript for utilities -->
+    <script>
+        // Global utilities
+        window.WordleApp = {
+            // Toast notification system
+            showToast(message, duration = 3000) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, duration);
+            },
+            
+            // Local storage helpers
+            getStoredData(key, defaultValue = null) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : defaultValue;
+                } catch {
+                    return defaultValue;
+                }
+            },
+            
+            setStoredData(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                } catch (e) {
+                    console.warn('Unable to save to localStorage:', e);
+                }
+            },
+            
+            // API helpers
+            async apiCall(endpoint, options = {}) {
+                const token = this.getStoredData('accessToken');
+                const defaultOptions = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { 'Authorization': `Bearer ${token}` })
+                    }
+                };
+                
+                const finalOptions = {
+                    ...defaultOptions,
+                    ...options,
+                    headers: {
+                        ...defaultOptions.headers,
+                        ...options.headers
+                    }
+                };
+                
+                try {
+                    const response = await fetch(endpoint, finalOptions);
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || `HTTP ${response.status}`);
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    throw error;
+                }
+            }
+        };
+        
+        // Alpine.js global store for authentication
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('auth', {
+                user: null,
+                accessToken: null,
+                refreshToken: null,
+                
+                init() {
+                    this.accessToken = WordleApp.getStoredData('accessToken');
+                    this.refreshToken = WordleApp.getStoredData('refreshToken');
+                    this.user = WordleApp.getStoredData('user');
+                },
+                
+                login(userData, tokens) {
+                    this.user = userData;
+                    this.accessToken = tokens.access_token;
+                    this.refreshToken = tokens.refresh_token;
+                    
+                    WordleApp.setStoredData('user', userData);
+                    WordleApp.setStoredData('accessToken', tokens.access_token);
+                    WordleApp.setStoredData('refreshToken', tokens.refresh_token);
+                },
+                
+                logout() {
+                    this.user = null;
+                    this.accessToken = null;
+                    this.refreshToken = null;
+                    
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    
+                    window.location.href = '/auth/login';
+                },
+                
+                get isAuthenticated() {
+                    return !!this.accessToken && !!this.user;
+                }
+            });
+        });
+    </script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50" x-data x-init="$store.auth.init()">
+    <!-- Skip to main content for screen readers -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50">
+        Skip to main content
+    </a>
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo and title -->
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">W</span>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">Wordle Clone</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation items -->
+                <div class="flex items-center space-x-4">
+                    <template x-if="$store.auth.isAuthenticated">
+                        <div class="flex items-center space-x-4">
+                            <!-- Game mode indicator -->
+                            <div class="hidden sm:block text-sm text-gray-600" x-data="{ mode: 'classic' }">
+                                <span class="font-medium">Mode:</span>
+                                <span x-text="mode.charAt(0).toUpperCase() + mode.slice(1)" class="capitalize"></span>
+                            </div>
+                            
+                            <!-- User menu -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-2">
+                                    <span x-text="$store.auth.user?.username || 'User'" class="font-medium"></span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Dropdown menu -->
+                                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    <a href="/stats" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Statistics</a>
+                                    <a href="/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Game History</a>
+                                    <hr class="my-1">
+                                    <button @click="$store.auth.logout()" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        Sign Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <template x-if="!$store.auth.isAuthenticated">
+                        <div class="flex items-center space-x-4">
+                            <a href="/auth/login" class="text-gray-600 hover:text-gray-900 font-medium">Sign In</a>
+                            <a href="/auth/register" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                                Sign Up
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main content area -->
+    <main id="main-content" class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Global loading indicator -->
+    <div x-show="false" x-data="{ show: false }" x-on:loading.window="show = true" x-on:loaded.window="show = false" class="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <div class="spinner"></div>
+            <span class="text-gray-700">Loading...</span>
+        </div>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

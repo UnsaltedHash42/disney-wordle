@@ -1,0 +1,17 @@
+demo2
+└── docs
+    ├── conventions
+    │   ├── docker.md
+    │   ├── flask.md
+    │   ├── langchain.md
+    │   ├── python.md
+    │   └── sqlAlchemy.md
+    ├── default_prompt.md
+    ├── Design.md
+    ├── notes.md
+    └── task_list.md
+
+Statistics:
+- Files: 9
+- Directories: 2
+- Total items: 11

@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Wordle Clone{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8" x-data="statsPage()" x-init="init()">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Your Statistics</h1>
+            <p class="text-gray-600">Track your progress across all game modes</p>
+        </div>
+        
+        <!-- Mode selector -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+                <button 
+                    @click="selectedMode = 'classic'; loadStats()" 
+                    :class="{ 'bg-blue-600 text-white shadow': selectedMode === 'classic', 'text-gray-700 hover:text-gray-900': selectedMode !== 'classic' }"
+                    class="px-6 py-2 rounded-md text-sm font-medium transition-all"
+                >
+                    Classic Wordle
+                </button>
+                <button 
+                    @click="selectedMode = 'disney'; loadStats()" 
+                    :class="{ 'bg-orange-600 text-white shadow': selectedMode === 'disney', 'text-gray-700 hover:text-gray-900': selectedMode !== 'disney' }"
+                    class="px-6 py-2 rounded-md text-sm font-medium transition-all"
+                >
+                    Disney Wordle
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loading state -->
+        <div x-show="loading" class="text-center py-12">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading statistics...</p>
+        </div>
+        
+        <!-- Stats content -->
+        <div x-show="!loading && currentStats" class="space-y-8">
+            <!-- Main statistics grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-center">
+                    <div class="text-3xl font-bold text-blue-600 mb-2" x-text="currentStats?.games_played || 0"></div>
+                    <div class="text-sm font-medium text-gray-600">Games Played</div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-center">
+                    <div class="text-3xl font-bold text-green-600 mb-2" x-text="currentStats?.win_percentage || 0"></div>
+                    <div class="text-sm font-medium text-gray-600">Win Percentage</div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-center">
+                    <div class="text-3xl font-bold text-orange-600 mb-2" x-text="currentStats?.current_streak || 0"></div>
+                    <div class="text-sm font-medium text-gray-600">Current Streak</div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2" x-text="currentStats?.max_streak || 0"></div>
+                    <div class="text-sm font-medium text-gray-600">Max Streak</div>
+                </div>
+            </div>
+            
+            <!-- Additional stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Games won breakdown -->
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Games Won</span>
+                            <span class="font-medium" x-text="currentStats?.games_won || 0"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Games Lost</span>
+                            <span class="font-medium" x-text="(currentStats?.games_played || 0) - (currentStats?.games_won || 0)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Average Guesses</span>
+                            <span class="font-medium" x-text="currentStats?.average_guesses || '---'"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Your rank -->
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Rank</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Win Rate Rank</span>
+                            <span class="font-medium" x-text="userRank?.win_percentage || '---'"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Streak Rank</span>
+                            <span class="font-medium" x-text="userRank?.current_streak || '---'"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Wins Rank</span>
+                            <span class="font-medium" x-text="userRank?.total_wins || '---'"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick actions -->
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <button @click="shareStats()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm">
+                            Share Stats
+                        </button>
+                        <a href="/game" class="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm text-center">
+                            Play Today's Puzzle
+                        </a>
+                        <a href="/history" class="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors text-sm text-center">
+                            View Game History
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Guess distribution chart -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Guess Distribution</h3>
+                <div class="space-y-4" x-show="currentStats?.guess_distribution">
+                    <template x-for="(count, attempts) in currentStats?.guess_distribution || {}" :key="attempts">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 text-sm font-medium text-center" x-text="attempts"></span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-8 relative">
+                                <div 
+                                    class="h-8 rounded-full flex items-center justify-end pr-3 transition-all duration-500"
+                                    :class="{ 
+                                        'bg-blue-600': selectedMode === 'classic',
+                                        'bg-orange-600': selectedMode === 'disney'
+                                    }"
+                                    :style="`width: ${getBarWidth(count)}%`"
+                                >
+                                    <span class="text-white text-sm font-medium" x-text="count" x-show="count > 0"></span>
+                                </div>
+                            </div>
+                            <span class="w-12 text-sm text-gray-600 text-right" x-text="`${getPercentage(count)}%`"></span>
+                        </div>
+                    </template>
+                </div>
+                
+                <div x-show="!currentStats?.guess_distribution || Object.keys(currentStats?.guess_distribution || {}).length === 0" class="text-center py-8 text-gray-500">
+                    <p>No games completed yet. Start playing to see your guess distribution!</p>
+                </div>
+            </div>
+            
+            <!-- Leaderboard -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Leaderboard</h3>
+                    <select x-model="leaderboardMetric" @change="loadLeaderboard()" class="text-sm border border-gray-300 rounded-md px-3 py-1">
+                        <option value="win_percentage">Win Percentage</option>
+                        <option value="current_streak">Current Streak</option>
+                        <option value="total_wins">Total Wins</option>
+                    </select>
+                </div>
+                
+                <div x-show="leaderboard.length > 0" class="space-y-2">
+                    <template x-for="(player, index) in leaderboard" :key="player.user_id">
+                        <div class="flex items-center justify-between p-3 rounded-lg" :class="{
+                            'bg-yellow-50 border border-yellow-200': index === 0,
+                            'bg-gray-50 border border-gray-200': index === 1,
+                            'bg-orange-50 border border-orange-200': index === 2,
+                            'bg-gray-25': index > 2
+                        }">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" :class="{
+                                    'bg-yellow-500 text-white': index === 0,
+                                    'bg-gray-400 text-white': index === 1,
+                                    'bg-orange-500 text-white': index === 2,
+                                    'bg-gray-200 text-gray-700': index > 2
+                                }">
+                                    <span x-text="index + 1"></span>
+                                </div>
+                                <span class="font-medium" x-text="player.username" :class="{
+                                    'text-yellow-800': index === 0,
+                                    'text-gray-800': index === 1,
+                                    'text-orange-800': index === 2
+                                }"></span>
+                                <span x-show="player.user_id === $store.auth.user?.id" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                    You
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-medium" x-text="getLeaderboardValue(player)"></div>
+                                <div class="text-xs text-gray-500" x-text="getLeaderboardSubtext(player)"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div x-show="leaderboard.length === 0" class="text-center py-8 text-gray-500">
+                    <p>No leaderboard data available yet.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Empty state -->
+        <div x-show="!loading && !currentStats" class="text-center py-12">
+            <div class="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-6a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Statistics Yet</h3>
+            <p class="text-gray-600 mb-4">Start playing to see your statistics!</p>
+            <a href="/game" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors">
+                Play Your First Game
+            </a>
+        </div>
+        
+        <!-- Error state -->
+        <div x-show="error" class="text-center py-12">
+            <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Failed to Load Statistics</h3>
+            <p class="text-gray-600 mb-4" x-text="error"></p>
+            <button @click="loadStats()" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors">
+                Try Again
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function statsPage() {
+    return {
+        loading: false,
+        error: null,
+        selectedMode: 'classic',
+        leaderboardMetric: 'win_percentage',
+        stats: {},
+        userRank: {},
+        leaderboard: [],
+        
+        get currentStats() {
+            return this.stats[this.selectedMode];
+        },
+        
+        async init() {
+            await this.loadStats();
+            await this.loadLeaderboard();
+            await this.loadUserRank();
+        },
+        
+        async loadStats() {
+            this.loading = true;
+            this.error = null;
+            
+            try {
+                const response = await WordleApp.apiCall(`/api/stats/me?mode=${this.selectedMode}`);
+                
+                if (response.success) {
+                    this.stats[this.selectedMode] = response.data;
+                } else {
+                    throw new Error(response.error || 'Failed to load statistics');
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+                this.error = error.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async loadLeaderboard() {
+            try {
+                const response = await WordleApp.apiCall(`/api/stats/leaderboard/${this.selectedMode}?metric=${this.leaderboardMetric}&limit=10`);
+                
+                if (response.success) {
+                    this.leaderboard = response.data.leaderboard;
+                }
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+            }
+        },
+        
+        async loadUserRank() {
+            try {
+                const [winRateRank, streakRank, winsRank] = await Promise.all([
+                    WordleApp.apiCall(`/api/stats/rank/${this.selectedMode}?metric=win_percentage`),
+                    WordleApp.apiCall(`/api/stats/rank/${this.selectedMode}?metric=current_streak`),
+                    WordleApp.apiCall(`/api/stats/rank/${this.selectedMode}?metric=total_wins`)
+                ]);
+                
+                this.userRank = {
+                    win_percentage: winRateRank.success ? `#${winRateRank.data.rank}` : '---',
+                    current_streak: streakRank.success ? `#${streakRank.data.rank}` : '---',
+                    total_wins: winsRank.success ? `#${winsRank.data.rank}` : '---'
+                };
+            } catch (error) {
+                console.error('Failed to load user rank:', error);
+            }
+        },
+        
+        getBarWidth(count) {
+            if (!this.currentStats?.guess_distribution) return 0;
+            
+            const maxCount = Math.max(...Object.values(this.currentStats.guess_distribution));
+            return maxCount > 0 ? Math.max((count / maxCount) * 100, count > 0 ? 5 : 0) : 0;
+        },
+        
+        getPercentage(count) {
+            if (!this.currentStats?.games_played || this.currentStats.games_played === 0) return 0;
+            return Math.round((count / this.currentStats.games_played) * 100);
+        },
+        
+        getLeaderboardValue(player) {
+            switch (this.leaderboardMetric) {
+                case 'win_percentage':
+                    return `${player.win_percentage}%`;
+                case 'current_streak':
+                    return player.current_streak;
+                case 'total_wins':
+                    return player.games_won;
+                default:
+                    return '---';
+            }
+        },
+        
+        getLeaderboardSubtext(player) {
+            switch (this.leaderboardMetric) {
+                case 'win_percentage':
+                    return `${player.games_won}/${player.games_played} games`;
+                case 'current_streak':
+                    return `Max: ${player.max_streak}`;
+                case 'total_wins':
+                    return `${player.win_percentage}% win rate`;
+                default:
+                    return '';
+            }
+        },
+        
+        shareStats() {
+            const stats = this.currentStats;
+            if (!stats) return;
+            
+            const mode = this.selectedMode === 'disney' ? 'Disney ' : '';
+            const text = `My ${mode}Wordle Statistics 📊\n\n` +
+                        `🎮 Games Played: ${stats.games_played}\n` +
+                        `🏆 Win Rate: ${stats.win_percentage}%\n` +
+                        `🔥 Current Streak: ${stats.current_streak}\n` +
+                        `📈 Max Streak: ${stats.max_streak}\n` +
+                        `🎯 Average Guesses: ${stats.average_guesses || 'N/A'}\n\n` +
+                        `Play at: ${window.location.origin}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Wordle Clone Statistics',
+                    text: text
+                }).catch(() => {
+                    this.copyToClipboard(text);
+                });
+            } else {
+                this.copyToClipboard(text);
+            }
+        },
+        
+        copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                WordleApp.showToast('Statistics copied to clipboard!');
+            }).catch(() => {
+                WordleApp.showToast('Failed to copy statistics');
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

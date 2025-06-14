@@ -1,0 +1,221 @@
+<!-- Statistics Modal Content -->
+<div x-data="statsModal()" x-init="loadStats()">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Statistics</h2>
+        <button @click="$parent.showStats = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Loading state -->
+    <div x-show="loading" class="text-center py-8">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading statistics...</p>
+    </div>
+    
+    <!-- Stats content -->
+    <div x-show="!loading" class="space-y-6">
+        <!-- Mode selector -->
+        <div class="flex justify-center">
+            <div class="bg-gray-100 rounded-lg p-1">
+                <button 
+                    @click="selectedMode = 'classic'" 
+                    :class="{ 'bg-white shadow': selectedMode === 'classic' }"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-all"
+                >
+                    Classic
+                </button>
+                <button 
+                    @click="selectedMode = 'disney'" 
+                    :class="{ 'bg-white shadow': selectedMode === 'disney' }"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-all"
+                >
+                    Disney
+                </button>
+            </div>
+        </div>
+        
+        <!-- Statistics grid -->
+        <div class="grid grid-cols-2 gap-4" x-show="currentStats">
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900" x-text="currentStats?.games_played || 0"></div>
+                <div class="text-sm text-gray-600">Played</div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900" x-text="currentStats?.win_percentage || 0"></div>
+                <div class="text-sm text-gray-600">Win %</div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900" x-text="currentStats?.current_streak || 0"></div>
+                <div class="text-sm text-gray-600">Current Streak</div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900" x-text="currentStats?.max_streak || 0"></div>
+                <div class="text-sm text-gray-600">Max Streak</div>
+            </div>
+        </div>
+        
+        <!-- Guess distribution -->
+        <div x-show="currentStats?.guess_distribution">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Guess Distribution</h3>
+            <div class="space-y-2">
+                <template x-for="(count, attempts) in currentStats?.guess_distribution || {}" :key="attempts">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-4 text-sm font-medium" x-text="attempts"></span>
+                        <div class="flex-1 bg-gray-200 rounded-full h-6 relative">
+                            <div 
+                                class="bg-blue-600 h-6 rounded-full flex items-center justify-end pr-2"
+                                :style="`width: ${getBarWidth(count)}%`"
+                            >
+                                <span class="text-white text-xs font-medium" x-text="count"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Average guesses -->
+        <div x-show="currentStats?.average_guesses > 0" class="text-center text-sm text-gray-600">
+            Average guesses: <span class="font-medium" x-text="currentStats?.average_guesses"></span>
+        </div>
+        
+        <!-- Leaderboard preview -->
+        <div x-show="leaderboard.length > 0">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Top Players</h3>
+            <div class="space-y-2">
+                <template x-for="(player, index) in leaderboard.slice(0, 5)" :key="player.user_id">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm font-medium text-gray-500" x-text="`#${index + 1}`"></span>
+                            <span class="font-medium" x-text="player.username"></span>
+                        </div>
+                        <span class="text-sm text-gray-600" x-text="`${player.win_percentage}%`"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Action buttons -->
+        <div class="flex space-x-3">
+            <button @click="loadLeaderboard()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                View Full Leaderboard
+            </button>
+            <button @click="shareStats()" class="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                Share Stats
+            </button>
+        </div>
+    </div>
+    
+    <!-- Error state -->
+    <div x-show="error" class="text-center py-8">
+        <p class="text-red-600 mb-4" x-text="error"></p>
+        <button @click="loadStats()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            Try Again
+        </button>
+    </div>
+</div>
+
+<script>
+function statsModal() {
+    return {
+        loading: false,
+        error: null,
+        selectedMode: 'classic',
+        stats: {},
+        leaderboard: [],
+        
+        get currentStats() {
+            return this.stats[this.selectedMode];
+        },
+        
+        async loadStats() {
+            this.loading = true;
+            this.error = null;
+            
+            try {
+                // Load user stats for both modes
+                const [classicResponse, disneyResponse] = await Promise.all([
+                    WordleApp.apiCall('/api/stats/me?mode=classic'),
+                    WordleApp.apiCall('/api/stats/me?mode=disney')
+                ]);
+                
+                if (classicResponse.success && disneyResponse.success) {
+                    this.stats = {
+                        classic: classicResponse.data,
+                        disney: disneyResponse.data
+                    };
+                } else {
+                    throw new Error('Failed to load statistics');
+                }
+                
+                // Load leaderboard for current mode
+                await this.loadLeaderboard();
+                
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+                this.error = 'Failed to load statistics. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async loadLeaderboard() {
+            try {
+                const response = await WordleApp.apiCall(`/api/stats/leaderboard/${this.selectedMode}?limit=10`);
+                
+                if (response.success) {
+                    this.leaderboard = response.data.leaderboard;
+                }
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+            }
+        },
+        
+        getBarWidth(count) {
+            if (!this.currentStats?.guess_distribution) return 0;
+            
+            const maxCount = Math.max(...Object.values(this.currentStats.guess_distribution));
+            return maxCount > 0 ? Math.max((count / maxCount) * 100, 5) : 0;
+        },
+        
+        shareStats() {
+            const stats = this.currentStats;
+            if (!stats) return;
+            
+            const mode = this.selectedMode === 'disney' ? 'Disney ' : '';
+            const text = `My ${mode}Wordle Stats:\n\n` +
+                        `🎮 Played: ${stats.games_played}\n` +
+                        `🏆 Win Rate: ${stats.win_percentage}%\n` +
+                        `🔥 Current Streak: ${stats.current_streak}\n` +
+                        `📈 Max Streak: ${stats.max_streak}\n\n` +
+                        `Play at: ${window.location.origin}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Wordle Clone Stats',
+                    text: text
+                }).catch(() => {
+                    this.copyToClipboard(text);
+                });
+            } else {
+                this.copyToClipboard(text);
+            }
+        },
+        
+        copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                WordleApp.showToast('Stats copied to clipboard!');
+            }).catch(() => {
+                WordleApp.showToast('Failed to copy stats');
+            });
+        }
+    }
+}
+</script>

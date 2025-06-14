@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - Wordle Clone{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <div class="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+                <span class="text-white font-bold text-2xl">W</span>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Or
+                <a href="/auth/login" class="font-medium text-blue-600 hover:text-blue-500">
+                    sign in to existing account
+                </a>
+            </p>
+        </div>
+
+        <!-- Registration form -->
+        <div class="mt-8 space-y-6" x-data="registerForm()">
+            <div class="rounded-md shadow-sm space-y-4">
+                <!-- Username field -->
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                        Username
+                    </label>
+                    <input 
+                        id="username" 
+                        name="username" 
+                        type="text" 
+                        autocomplete="username" 
+                        required 
+                        x-model="form.username"
+                        @input="validateUsername()"
+                        :class="{ 'border-red-500': errors.username, 'border-green-500': validations.username }"
+                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
+                        placeholder="Choose a username"
+                    >
+                    <p x-show="errors.username" x-text="errors.username" class="mt-1 text-sm text-red-600"></p>
+                    <p x-show="validations.username && !errors.username" class="mt-1 text-sm text-green-600">Username looks good!</p>
+                </div>
+
+                <!-- Email field -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        Email address
+                    </label>
+                    <input 
+                        id="email" 
+                        name="email" 
+                        type="email" 
+                        autocomplete="email" 
+                        required 
+                        x-model="form.email"
+                        @input="validateEmail()"
+                        :class="{ 'border-red-500': errors.email, 'border-green-500': validations.email }"
+                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
+                        placeholder="Enter your email"
+                    >
+                    <p x-show="errors.email" x-text="errors.email" class="mt-1 text-sm text-red-600"></p>
+                    <p x-show="validations.email && !errors.email" class="mt-1 text-sm text-green-600">Email looks good!</p>
+                </div>
+
+                <!-- Password field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input 
+                            id="password" 
+                            name="password" 
+                            :type="showPassword ? 'text' : 'password'"
+                            autocomplete="new-password" 
+                            required 
+                            x-model="form.password"
+                            @input="validatePassword()"
+                            :class="{ 'border-red-500': errors.password, 'border-green-500': validations.password }"
+                            class="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
+                            placeholder="Create a password"
+                        >
+                        <button 
+                            type="button" 
+                            @click="showPassword = !showPassword"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        >
+                            <svg x-show="!showPassword" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPassword" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L12 12m3.878-3.878L21 21m-3.878-3.878L12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Password requirements -->
+                    <div class="mt-2">
+                        <p class="text-xs text-gray-600 mb-1">Password must contain:</p>
+                        <div class="space-y-1">
+                            <div class="flex items-center text-xs">
+                                <svg :class="passwordChecks.length ? 'text-green-500' : 'text-gray-400'" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span :class="passwordChecks.length ? 'text-green-600' : 'text-gray-600'">At least 8 characters</span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <svg :class="passwordChecks.uppercase ? 'text-green-500' : 'text-gray-400'" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span :class="passwordChecks.uppercase ? 'text-green-600' : 'text-gray-600'">One uppercase letter</span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <svg :class="passwordChecks.lowercase ? 'text-green-500' : 'text-gray-400'" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span :class="passwordChecks.lowercase ? 'text-green-600' : 'text-gray-600'">One lowercase letter</span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <svg :class="passwordChecks.number ? 'text-green-500' : 'text-gray-400'" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span :class="passwordChecks.number ? 'text-green-600' : 'text-gray-600'">One number</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p x-show="errors.password" x-text="errors.password" class="mt-1 text-sm text-red-600"></p>
+                </div>
+
+                <!-- Confirm password field -->
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        Confirm Password
+                    </label>
+                    <input 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        :type="showPassword ? 'text' : 'password'"
+                        autocomplete="new-password" 
+                        required 
+                        x-model="form.confirmPassword"
+                        @input="validateConfirmPassword()"
+                        :class="{ 'border-red-500': errors.confirmPassword, 'border-green-500': validations.confirmPassword }"
+                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
+                        placeholder="Confirm your password"
+                    >
+                    <p x-show="errors.confirmPassword" x-text="errors.confirmPassword" class="mt-1 text-sm text-red-600"></p>
+                    <p x-show="validations.confirmPassword && !errors.confirmPassword" class="mt-1 text-sm text-green-600">Passwords match!</p>
+                </div>
+            </div>
+
+            <!-- Terms and conditions -->
+            <div class="flex items-center">
+                <input 
+                    id="terms" 
+                    name="terms" 
+                    type="checkbox" 
+                    required
+                    x-model="form.agreeToTerms"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                >
+                <label for="terms" class="ml-2 block text-sm text-gray-900">
+                    I agree to the 
+                    <a href="#" class="text-blue-600 hover:text-blue-500">Terms of Service</a> 
+                    and 
+                    <a href="#" class="text-blue-600 hover:text-blue-500">Privacy Policy</a>
+                </label>
+            </div>
+            <p x-show="errors.terms" x-text="errors.terms" class="text-sm text-red-600"></p>
+
+            <!-- Submit button -->
+            <div>
+                <button 
+                    type="submit" 
+                    @click="submitForm()" 
+                    :disabled="loading || !isFormValid"
+                    :class="{ 'opacity-50 cursor-not-allowed': loading || !isFormValid }"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <span x-show="!loading">Create Account</span>
+                    <span x-show="loading" class="flex items-center">
+                        <div class="spinner mr-2"></div>
+                        Creating account...
+                    </span>
+                </button>
+            </div>
+
+            <!-- Error message -->
+            <div x-show="errors.general" class="rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Registration failed
+                        </h3>
+                        <p x-text="errors.general" class="mt-1 text-sm text-red-700"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function registerForm() {
+    return {
+        form: {
+            username: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            agreeToTerms: false
+        },
+        errors: {},
+        validations: {},
+        loading: false,
+        showPassword: false,
+
+        get passwordChecks() {
+            const password = this.form.password;
+            return {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password)
+            };
+        },
+
+        get isFormValid() {
+            return this.validations.username && 
+                   this.validations.email && 
+                   this.validations.password && 
+                   this.validations.confirmPassword &&
+                   this.form.agreeToTerms;
+        },
+
+        validateUsername() {
+            this.errors.username = '';
+            this.validations.username = false;
+            
+            if (!this.form.username) {
+                this.errors.username = 'Username is required';
+            } else if (this.form.username.length < 3) {
+                this.errors.username = 'Username must be at least 3 characters';
+            } else if (this.form.username.length > 50) {
+                this.errors.username = 'Username must be less than 50 characters';
+            } else if (!/^[a-zA-Z0-9_-]+$/.test(this.form.username)) {
+                this.errors.username = 'Username can only contain letters, numbers, hyphens, and underscores';
+            } else {
+                this.validations.username = true;
+            }
+        },
+
+        validateEmail() {
+            this.errors.email = '';
+            this.validations.email = false;
+            
+            if (!this.form.email) {
+                this.errors.email = 'Email is required';
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email)) {
+                this.errors.email = 'Please enter a valid email address';
+            } else {
+                this.validations.email = true;
+            }
+        },
+
+        validatePassword() {
+            this.errors.password = '';
+            this.validations.password = false;
+            
+            if (!this.form.password) {
+                this.errors.password = 'Password is required';
+            } else {
+                const checks = this.passwordChecks;
+                if (!checks.length || !checks.uppercase || !checks.lowercase || !checks.number) {
+                    this.errors.password = 'Password must meet all requirements';
+                } else {
+                    this.validations.password = true;
+                }
+            }
+            
+            // Re-validate confirm password if it was entered
+            if (this.form.confirmPassword) {
+                this.validateConfirmPassword();
+            }
+        },
+
+        validateConfirmPassword() {
+            this.errors.confirmPassword = '';
+            this.validations.confirmPassword = false;
+            
+            if (!this.form.confirmPassword) {
+                this.errors.confirmPassword = 'Please confirm your password';
+            } else if (this.form.password !== this.form.confirmPassword) {
+                this.errors.confirmPassword = 'Passwords do not match';
+            } else {
+                this.validations.confirmPassword = true;
+            }
+        },
+
+        validateForm() {
+            this.validateUsername();
+            this.validateEmail();
+            this.validatePassword();
+            this.validateConfirmPassword();
+            
+            this.errors.terms = '';
+            if (!this.form.agreeToTerms) {
+                this.errors.terms = 'You must agree to the terms and conditions';
+            }
+            
+            return this.isFormValid && !this.errors.terms;
+        },
+
+        async submitForm() {
+            if (!this.validateForm()) {
+                return;
+            }
+
+            this.loading = true;
+            this.errors = {};
+
+            try {
+                const response = await WordleApp.apiCall('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: this.form.username,
+                        email: this.form.email,
+                        password: this.form.password
+                    })
+                });
+
+                if (response.success) {
+                    // Store authentication data
+                    this.$store.auth.login(response.data.user, {
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token
+                    });
+
+                    WordleApp.showToast('Account created successfully! Welcome to Wordle!', 3000);
+                    
+                    // Redirect to game
+                    setTimeout(() => {
+                        window.location.href = '/game';
+                    }, 1500);
+                } else {
+                    this.errors.general = response.error || 'Registration failed';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                this.errors.general = error.message || 'An error occurred. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -29,6 +29,9 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     # Load configuration
     config = get_flask_config()
     app.config.update(config)
+    # Enable JWTs in cookies for SSR compatibility
+    app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+    app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # Disable CSRF for local/dev SSR
     
     # Initialize extensions
     init_extensions(app)
@@ -44,6 +47,7 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     
     # Configure logging
     configure_logging(app)
+    print_routes(app)
     
     return app
 
@@ -153,4 +157,13 @@ def configure_logging(app: Flask) -> None:
         )
         
         app.logger.setLevel(logging.INFO)
-        app.logger.info('Wordle application startup') 
+        app.logger.info('Wordle application startup')
+
+
+def print_routes(app: Flask) -> None:
+    """Print all registered routes for debugging."""
+    print("\nRegistered routes:")
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(sorted(rule.methods))
+        print(f"{rule.endpoint:30s} {methods:20s} {rule}")
+    print() 

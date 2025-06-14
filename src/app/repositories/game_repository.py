@@ -8,78 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc
 
 from .base_repository import BaseRepository
-from ..models.game import GameMode, DailyWord, WordList, GameSession, UserStats
+from ..models.game import GameMode, WordList, GameSession, UserStats
 
 logger = logging.getLogger(__name__)
-
-
-class DailyWordRepository(BaseRepository[DailyWord]):
-    """Repository for DailyWord model with specific query methods."""
-    
-    def __init__(self):
-        """Initialize daily word repository."""
-        super().__init__(DailyWord)
-    
-    def get_by_date_and_mode(self, puzzle_date: date, game_mode: GameMode) -> Optional[DailyWord]:
-        """Get daily word by date and game mode.
-        
-        Args:
-            puzzle_date: Date of the puzzle
-            game_mode: Game mode (classic or disney)
-            
-        Returns:
-            DailyWord if found, None otherwise
-        """
-        try:
-            return self.session.query(DailyWord).filter(
-                and_(
-                    DailyWord.date == puzzle_date,
-                    DailyWord.game_mode == game_mode
-                )
-            ).first()
-        except SQLAlchemyError as e:
-            logger.error(f"Error getting daily word for {puzzle_date} {game_mode}: {e}")
-            self.session.rollback()
-            return None
-    
-    def get_latest_by_mode(self, game_mode: GameMode) -> Optional[DailyWord]:
-        """Get latest daily word for a game mode.
-        
-        Args:
-            game_mode: Game mode to query
-            
-        Returns:
-            Latest DailyWord for the mode, None if not found
-        """
-        try:
-            return self.session.query(DailyWord).filter(
-                DailyWord.game_mode == game_mode
-            ).order_by(desc(DailyWord.date)).first()
-        except SQLAlchemyError as e:
-            logger.error(f"Error getting latest daily word for {game_mode}: {e}")
-            self.session.rollback()
-            return None
-    
-    def exists_for_date_and_mode(self, puzzle_date: date, game_mode: GameMode) -> bool:
-        """Check if daily word exists for date and mode.
-        
-        Args:
-            puzzle_date: Date to check
-            game_mode: Game mode to check
-            
-        Returns:
-            True if daily word exists, False otherwise
-        """
-        try:
-            return self.session.query(DailyWord).filter(
-                and_(
-                    DailyWord.date == puzzle_date,
-                    DailyWord.game_mode == game_mode
-                )
-            ).count() > 0
-        except SQLAlchemyError as e:
-            logger.error(f"Error checking daily word existence for {puzzle_date} {game_mode}: {e}")
-            return False
 
 
 class WordListRepository(BaseRepository[WordList]):
@@ -184,104 +115,39 @@ class WordListRepository(BaseRepository[WordList]):
 
 
 class GameSessionRepository(BaseRepository[GameSession]):
-    """Repository for GameSession model with specific query methods."""
+    """Repository for GameSession model with specific query methods (unlimited play)."""
     
     def __init__(self):
         """Initialize game session repository."""
         super().__init__(GameSession)
     
-    def get_by_user_and_daily_word(self, user_id: int, daily_word_id: int) -> Optional[GameSession]:
-        """Get game session by user and daily word.
-        
-        Args:
-            user_id: User ID
-            daily_word_id: Daily word ID
-            
-        Returns:
-            GameSession if found, None otherwise
-        """
-        try:
-            return self.session.query(GameSession).filter(
-                and_(
-                    GameSession.user_id == user_id,
-                    GameSession.daily_word_id == daily_word_id
-                )
-            ).first()
-        except SQLAlchemyError as e:
-            logger.error(f"Error getting game session for user {user_id}, daily_word {daily_word_id}: {e}")
-            self.session.rollback()
-            return None
+    def create_new_session(self, user_id: int, answer_word: str, game_mode: GameMode) -> GameSession:
+        """Create a new game session for a user with a random answer word."""
+        new_session = GameSession(
+            user_id=user_id,
+            answer_word=answer_word,
+            game_mode=game_mode,
+            guesses=[],
+            completed=False,
+            won=False,
+            attempts_used=0
+        )
+        return self.create(new_session)
     
-    def get_user_sessions_by_mode(self, user_id: int, game_mode: GameMode, limit: Optional[int] = None) -> List[GameSession]:
-        """Get user's game sessions for a specific mode.
-        
-        Args:
-            user_id: User ID
-            game_mode: Game mode to filter by
-            limit: Optional limit on number of sessions
-            
-        Returns:
-            List of GameSession objects
-        """
+    def get_user_sessions_by_mode(self, user_id: int, game_mode: GameMode, limit: int = 10) -> List[GameSession]:
+        """Get user's game sessions for a specific mode."""
         try:
-            query = self.session.query(GameSession).join(DailyWord).filter(
-                and_(
-                    GameSession.user_id == user_id,
-                    DailyWord.game_mode == game_mode
-                )
-            ).order_by(desc(DailyWord.date))
-            
+            query = self.session.query(GameSession).filter(
+                GameSession.user_id == user_id,
+                GameSession.game_mode == game_mode
+            ).order_by(GameSession.created_at.desc())
             if limit:
                 query = query.limit(limit)
-            
             return query.all()
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error getting user sessions for user {user_id}, mode {game_mode}: {e}")
             self.session.rollback()
             return []
-    
-    def get_completed_sessions_count(self, user_id: int, game_mode: GameMode) -> int:
-        """Get count of completed sessions for user in a mode.
-        
-        Args:
-            user_id: User ID
-            game_mode: Game mode to count
-            
-        Returns:
-            Number of completed sessions
-        """
-        try:
-            return self.session.query(GameSession).join(DailyWord).filter(
-                and_(
-                    GameSession.user_id == user_id,
-                    DailyWord.game_mode == game_mode,
-                    GameSession.completed == True
-                )
-            ).count()
-        except SQLAlchemyError as e:
-            logger.error(f"Error counting completed sessions for user {user_id}, mode {game_mode}: {e}")
-            return 0
-    
-    def session_exists(self, user_id: int, daily_word_id: int) -> bool:
-        """Check if game session exists for user and daily word.
-        
-        Args:
-            user_id: User ID
-            daily_word_id: Daily word ID
-            
-        Returns:
-            True if session exists, False otherwise
-        """
-        try:
-            return self.session.query(GameSession).filter(
-                and_(
-                    GameSession.user_id == user_id,
-                    GameSession.daily_word_id == daily_word_id
-                )
-            ).count() > 0
-        except SQLAlchemyError as e:
-            logger.error(f"Error checking session existence for user {user_id}, daily_word {daily_word_id}: {e}")
-            return False
 
 
 class UserStatsRepository(BaseRepository[UserStats]):

@@ -1,0 +1,1028 @@
+# Module Functions Documentation
+
+## Module: __init__
+**File:** `__init__.py`
+
+**Imports:**
+- api.auth.auth_bp
+- api.game.game_bp
+- api.health.health_bp
+- api.stats.stats_bp
+- config.get_flask_config
+- database.init_db
+- flask.Flask
+- flask.jsonify
+- flask_cors.CORS
+- flask_jwt_extended.JWTManager
+- flask_limiter.Limiter
+- flask_limiter.util.get_remote_address
+- logging
+- middleware.rate_limiting.RateLimitConfig
+- middleware.security.SecurityMiddleware
+- routes.main.main_bp
+- typing.Optional
+
+**Functions:**
+
+### `def create_app(config_name: Optional[str] = None) -> Flask`
+
+**Description:**
+Create and configure Flask application.
+
+Args:
+config_name: Configuration environment name
+
+Returns:
+Configured Flask application instance
+
+**Line:** 18
+
+---
+
+### `def init_extensions(app: Flask) -> None`
+
+**Description:**
+Initialize Flask extensions.
+
+Args:
+app: Flask application instance
+
+**Line:** 55
+
+---
+
+### `def register_blueprints(app: Flask) -> None`
+
+**Description:**
+Register application blueprints.
+
+Args:
+app: Flask application instance
+
+**Line:** 88
+
+---
+
+### `def register_error_handlers(app: Flask) -> None`
+
+**Description:**
+Register global error handlers.
+
+Args:
+app: Flask application instance
+
+**Line:** 111
+
+---
+
+### `def configure_logging(app: Flask) -> None`
+
+**Description:**
+Configure application logging.
+
+Args:
+app: Flask application instance
+
+**Line:** 146
+
+---
+
+### `def print_routes(app: Flask) -> None`
+
+**Description:**
+Print all registered routes for debugging.
+
+**Line:** 163
+
+---
+
+
+## Module: api.auth
+**File:** `api/auth.py`
+
+**Imports:**
+- flask.Blueprint
+- flask.g
+- flask.jsonify
+- flask.make_response
+- flask.request
+- flask_jwt_extended.create_access_token
+- flask_jwt_extended.create_refresh_token
+- flask_jwt_extended.get_jwt_identity
+- flask_jwt_extended.jwt_required
+- flask_jwt_extended.set_access_cookies
+- flask_jwt_extended.set_refresh_cookies
+- pydantic.BaseModel
+- pydantic.ValidationError
+- services.auth_service.AuthService
+- utils.responses.error_response
+- utils.responses.success_response
+- utils.validation.validate_json
+
+**Functions:**
+
+### `def register()`
+
+**Decorators:**
+- `@auth_bp.route(...)`
+- `@validate_json(...)`
+
+**Description:**
+Register a new user.
+
+Returns:
+JSON response with user data and tokens
+
+**Line:** 33
+
+---
+
+### `def login()`
+
+**Decorators:**
+- `@auth_bp.route(...)`
+- `@validate_json(...)`
+
+**Description:**
+Authenticate user and return tokens.
+
+Returns:
+JSON response with user data and tokens
+
+**Line:** 68
+
+---
+
+### `def refresh()`
+
+**Decorators:**
+- `@auth_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Refresh access token using refresh token.
+
+Returns:
+JSON response with new access token
+
+**Line:** 103
+
+---
+
+### `def get_current_user()`
+
+**Decorators:**
+- `@auth_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get current authenticated user information.
+
+Returns:
+JSON response with current user data
+
+**Line:** 129
+
+---
+
+
+## Module: api.game
+**File:** `api/game.py`
+
+**Imports:**
+- datetime.date
+- datetime.datetime
+- flask.Blueprint
+- flask.request
+- flask_jwt_extended.get_jwt_identity
+- flask_jwt_extended.jwt_required
+- logging
+- models.game.GameMode
+- services.game_service.GameService
+- services.word_validation_service.WordValidationService
+- utils.responses.error_response
+- utils.responses.success_response
+- utils.validation.validate_json
+
+**Functions:**
+
+### `def get_daily_puzzle(game_mode: str)`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get today's daily puzzle for the specified game mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Returns:
+JSON response with puzzle and session information
+
+**Line:** 26
+
+---
+
+### `def submit_guess()`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Submit a guess for the current game session.
+
+Expected JSON body:
+{
+"word": "HELLO",
+"session_id": 123
+}
+
+Returns:
+JSON response with guess result and updated game state
+
+**Line:** 73
+
+---
+
+### `def get_game_session(session_id: int)`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get game session details.
+
+Args:
+session_id: Game session ID
+
+Returns:
+JSON response with session information
+
+**Line:** 117
+
+---
+
+### `def validate_word()`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Validate if a word can be used as a guess.
+
+Expected JSON body:
+{
+"word": "HELLO",
+"game_mode": "classic"
+}
+
+Returns:
+JSON response with validation result
+
+**Line:** 149
+
+---
+
+### `def get_game_history(game_mode: str)`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get user's game history for a specific mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Query parameters:
+limit: Maximum number of games to return (default: 10, max: 50)
+
+Returns:
+JSON response with game history
+
+**Line:** 194
+
+---
+
+### `def get_game_modes()`
+
+**Decorators:**
+- `@game_bp.route(...)`
+
+**Description:**
+Get available game modes.
+
+Returns:
+JSON response with available game modes
+
+**Line:** 241
+
+---
+
+### `def get_game_status(game_mode: str)`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get current game status for a user in a specific mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Returns:
+JSON response with current game status
+
+**Line:** 273
+
+---
+
+### `def start_new_game(game_mode: str)`
+
+**Decorators:**
+- `@game_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Start a new game session for the user with a random answer word (unlimited play).
+Args:
+game_mode: Game mode ('classic' or 'disney')
+Returns:
+JSON response with new session information
+
+**Line:** 327
+
+---
+
+
+## Module: api.health
+**File:** `api/health.py`
+
+**Imports:**
+- database.db
+- flask.Blueprint
+- flask.jsonify
+- models.game.GameSession
+- models.user.User
+- utils.caching.CacheManager
+
+**Functions:**
+
+### `def health_check()`
+
+**Decorators:**
+- `@health_bp.route(...)`
+
+**Description:**
+Health check endpoint for load balancers and monitoring.
+
+**Line:** 10
+
+---
+
+### `def metrics()`
+
+**Decorators:**
+- `@health_bp.route(...)`
+
+**Description:**
+Basic metrics endpoint for monitoring.
+
+**Line:** 32
+
+---
+
+
+## Module: api.stats
+**File:** `api/stats.py`
+
+**Imports:**
+- flask.Blueprint
+- flask.request
+- flask_jwt_extended.get_jwt_identity
+- flask_jwt_extended.jwt_required
+- logging
+- models.game.GameMode
+- services.statistics_service.StatisticsService
+- utils.responses.error_response
+- utils.responses.success_response
+
+**Functions:**
+
+### `def get_user_stats(user_id: int)`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get user statistics for all game modes.
+
+Args:
+user_id: User ID to get stats for
+
+Query parameters:
+mode: Specific game mode ('classic' or 'disney') - optional
+
+Returns:
+JSON response with user statistics
+
+**Line:** 22
+
+---
+
+### `def get_my_stats()`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get current user's statistics for all game modes.
+
+Query parameters:
+mode: Specific game mode ('classic' or 'disney') - optional
+
+Returns:
+JSON response with user statistics
+
+**Line:** 78
+
+---
+
+### `def get_leaderboard(game_mode: str)`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+
+**Description:**
+Get leaderboard for a specific game mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Query parameters:
+metric: Ranking metric ('win_percentage', 'total_wins', 'current_streak') - default: 'win_percentage'
+limit: Number of users to return (default: 10, max: 50)
+
+Returns:
+JSON response with leaderboard data
+
+**Line:** 117
+
+---
+
+### `def get_global_stats(game_mode: str)`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+
+**Description:**
+Get global statistics for a specific game mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Returns:
+JSON response with global statistics
+
+**Line:** 170
+
+---
+
+### `def get_user_rank(game_mode: str)`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get current user's rank for a specific game mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Query parameters:
+metric: Ranking metric ('win_percentage', 'total_wins', 'current_streak') - default: 'win_percentage'
+
+Returns:
+JSON response with user's rank information
+
+**Line:** 200
+
+---
+
+### `def get_streak_analysis(game_mode: str)`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Get current user's streak analysis for a specific game mode.
+
+Args:
+game_mode: Game mode ('classic' or 'disney')
+
+Returns:
+JSON response with streak analysis
+
+**Line:** 245
+
+---
+
+### `def get_stats_summary()`
+
+**Decorators:**
+- `@stats_bp.route(...)`
+
+**Description:**
+Get summary of statistics across all game modes.
+
+Returns:
+JSON response with statistics summary
+
+**Line:** 278
+
+---
+
+### `def _filter_public_stats(stats: dict) -> dict`
+
+**Description:**
+Filter user stats to show only public information.
+
+Args:
+stats: Full user statistics dictionary
+
+Returns:
+Filtered statistics dictionary with only public info
+
+**Line:** 313
+
+---
+
+### `def _filter_public_all_stats(all_stats: dict) -> dict`
+
+**Description:**
+Filter all user stats to show only public information.
+
+Args:
+all_stats: Full user statistics dictionary for all modes
+
+Returns:
+Filtered statistics dictionary with only public info
+
+**Line:** 333
+
+---
+
+
+## Module: config.settings
+**File:** `config/settings.py`
+
+**Imports:**
+- datetime.timedelta
+- functools.lru_cache
+- pydantic.Field
+- pydantic_settings.BaseSettings
+- typing.Optional
+
+**Functions:**
+
+### `def get_settings() -> Settings`
+
+**Decorators:**
+- `@lru_cache(...)`
+
+**Description:**
+Get cached settings instance.
+
+**Line:** 50
+
+---
+
+### `def get_flask_config() -> dict`
+
+**Description:**
+Convert Pydantic settings to Flask config dict.
+
+**Line:** 55
+
+---
+
+
+## Module: database.connection
+**File:** `database/connection.py`
+
+**Imports:**
+- config.get_flask_config
+- flask.Flask
+- flask_migrate.Migrate
+- flask_sqlalchemy.SQLAlchemy
+- models.User
+- typing.Optional
+
+**Functions:**
+
+### `def init_db(app: Flask) -> None`
+
+**Description:**
+Initialize database with Flask application.
+
+Args:
+app: Flask application instance
+
+**Line:** 16
+
+---
+
+### `def get_db_session()`
+
+**Description:**
+Get database session for dependency injection.
+
+Returns:
+SQLAlchemy database session
+
+**Line:** 35
+
+---
+
+
+## Module: database.indexes
+**File:** `database/indexes.py`
+
+**Imports:**
+- models.game.GameSession
+- models.game.UserStats
+- models.game.WordList
+- models.user.User
+- sqlalchemy.Index
+- sqlalchemy.text
+
+**Functions:**
+
+### `def create_performance_indexes(db)`
+
+**Description:**
+Create database indexes for better query performance.
+
+**Line:** 8
+
+---
+
+### `def create_database_views(db)`
+
+**Description:**
+Create database views for complex queries.
+
+**Line:** 98
+
+---
+
+### `def apply_database_optimizations(db)`
+
+**Description:**
+Apply all database optimizations.
+
+**Line:** 110
+
+---
+
+### `def get_query_performance_tips()`
+
+**Description:**
+Get query performance optimization tips.
+
+**Line:** 140
+
+---
+
+
+## Module: routes.main
+**File:** `routes/main.py`
+
+**Imports:**
+- flask.Blueprint
+- flask.redirect
+- flask.render_template
+- flask.request
+- flask.url_for
+- flask_jwt_extended.get_jwt_identity
+- flask_jwt_extended.jwt_required
+- flask_jwt_extended.verify_jwt_in_request
+
+**Functions:**
+
+### `def index()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+
+**Description:**
+Home page - redirect based on authentication status.
+
+**Line:** 11
+
+---
+
+### `def auth_login()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+
+**Description:**
+Login page.
+
+**Line:** 26
+
+---
+
+### `def auth_register()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+
+**Description:**
+Registration page.
+
+**Line:** 41
+
+---
+
+### `def game()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Main game page.
+
+**Line:** 57
+
+---
+
+### `def stats()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Statistics page.
+
+**Line:** 68
+
+---
+
+### `def history()`
+
+**Decorators:**
+- `@main_bp.route(...)`
+- `@jwt_required(...)`
+
+**Description:**
+Game history page.
+
+**Line:** 79
+
+---
+
+
+## Module: utils.caching
+**File:** `utils/caching.py`
+
+**Imports:**
+- datetime.datetime
+- datetime.timedelta
+- flask.current_app
+- flask.g
+- functools.wraps
+- hashlib
+- json
+- time
+- typing.Any
+- typing.Callable
+- typing.Dict
+- typing.Optional
+
+**Functions:**
+
+### `def cache_key(*args, **kwargs) -> str`
+
+**Description:**
+Generate cache key from arguments.
+
+**Line:** 75
+
+---
+
+### `def cached(ttl: int = 300, key_prefix: str = '')`
+
+**Description:**
+Decorator for caching function results.
+
+**Line:** 81
+
+---
+
+### `def cache_daily_puzzle(game_mode: str, date: str)`
+
+**Description:**
+Cache daily puzzle for better performance.
+
+**Line:** 104
+
+---
+
+### `def set_daily_puzzle_cache(game_mode: str, date: str, puzzle_data: Any)`
+
+**Description:**
+Set daily puzzle cache (expires at end of day).
+
+**Line:** 110
+
+---
+
+### `def cache_user_stats(user_id: int, game_mode: str = None)`
+
+**Description:**
+Cache user statistics.
+
+**Line:** 122
+
+---
+
+### `def set_user_stats_cache(user_id: int, stats_data: Any, game_mode: str = None, ttl: int = 600)`
+
+**Description:**
+Set user statistics cache.
+
+**Line:** 132
+
+---
+
+### `def invalidate_user_stats_cache(user_id: int)`
+
+**Description:**
+Invalidate user statistics cache after game completion.
+
+**Line:** 142
+
+---
+
+### `def cache_leaderboard(game_mode: str, metric: str, limit: int = 10)`
+
+**Description:**
+Cache leaderboard data.
+
+**Line:** 150
+
+---
+
+### `def set_leaderboard_cache(game_mode: str, metric: str, limit: int, leaderboard_data: Any, ttl: int = 300)`
+
+**Description:**
+Set leaderboard cache.
+
+**Line:** 156
+
+---
+
+### `def cache_word_validation(word: str, game_mode: str)`
+
+**Description:**
+Cache word validation results.
+
+**Line:** 162
+
+---
+
+### `def set_word_validation_cache(word: str, game_mode: str, is_valid: bool, ttl: int = 86400)`
+
+**Description:**
+Set word validation cache (cache for 24 hours).
+
+**Line:** 168
+
+---
+
+
+## Module: utils.responses
+**File:** `utils/responses.py`
+
+**Imports:**
+- flask.jsonify
+- typing.Any
+- typing.Dict
+- typing.Optional
+
+**Functions:**
+
+### `def success_response(data: Any = None, status_code: int = 200) -> tuple`
+
+**Description:**
+Create standardized success response.
+
+Args:
+data: Response data to include
+status_code: HTTP status code
+
+Returns:
+Tuple of (JSON response, status code)
+
+**Line:** 7
+
+---
+
+### `def error_response(message: str, status_code: int = 400, details: Optional[Dict] = None) -> tuple`
+
+**Description:**
+Create standardized error response.
+
+Args:
+message: Error message
+status_code: HTTP status code
+details: Additional error details
+
+Returns:
+Tuple of (JSON response, status code)
+
+**Line:** 25
+
+---
+
+### `def paginated_response(items: list, page: int, per_page: int, total: int) -> Dict[(str, Any)]`
+
+**Description:**
+Create paginated response data.
+
+Args:
+items: List of items for current page
+page: Current page number
+per_page: Items per page
+total: Total number of items
+
+Returns:
+Paginated response data structure
+
+**Line:** 48
+
+---
+
+
+## Module: utils.validation
+**File:** `utils/validation.py`
+
+**Imports:**
+- flask.g
+- flask.jsonify
+- flask.request
+- functools.wraps
+- pydantic.BaseModel
+- pydantic.ValidationError
+- responses.error_response
+- typing.Any
+- typing.Callable
+- typing.Type
+
+**Functions:**
+
+### `def validate_json(model_class: Type[BaseModel]) -> Callable`
+
+**Description:**
+Decorator to validate JSON request data using Pydantic model.
+
+Args:
+model_class: Pydantic model class for validation
+
+Returns:
+Decorator function
+
+**Line:** 12
+
+---
+
+### `def validate_query_params(model_class: Type[BaseModel]) -> Callable`
+
+**Description:**
+Decorator to validate query parameters using Pydantic model.
+
+Args:
+model_class: Pydantic model class for validation
+
+Returns:
+Decorator function
+
+**Line:** 60
+
+---
+

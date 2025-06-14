@@ -71,4 +71,6 @@ def get_flask_config() -> dict:
         "JWT_ACCESS_TOKEN_EXPIRES": timedelta(seconds=settings.jwt_access_token_expires),
         "JWT_REFRESH_TOKEN_EXPIRES": timedelta(seconds=settings.jwt_refresh_token_expires),
         "RATELIMIT_STORAGE_URL": settings.rate_limit_storage_url,
+        "JWT_TOKEN_LOCATION": ["headers", "cookies"],
+        "JWT_COOKIE_CSRF_PROTECT": False,
     } 

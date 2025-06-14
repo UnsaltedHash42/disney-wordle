@@ -1,0 +1,493 @@
+@startuml
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+
+package "middleware" {
+  class RateLimitConfig {
+    +RATE_LIMITS
+    +limiter
+    --
+    +{static} init_limiter(): Limiter
+    +{static} apply_limits(app)
+    +limit_register()
+    +limit_login()
+    +limit_refresh()
+    +{static} get_error_handler()
+    +ratelimit_handler()
+  }
+
+  class SecurityMiddleware {
+    +app
+    +security_headers
+    +response_time
+    +suspicious_patterns
+    +full_url
+    +user_agent
+    +bot_indicators
+    +client_ip
+    +current_time
+    --
+    -__init__(app)
+    +init_app(app)
+    +start_timer()
+    -_before_request()
+    -_after_request(response)
+    -_generate_request_id(): str
+    -_is_suspicious_request(): bool
+  }
+
+}
+
+package "config" {
+  class Settings {
+    +flask_env: str
+    +secret_key: str
+    +debug: bool
+    +testing: bool
+    +jwt_secret_key: str
+    +jwt_access_token_expires: int
+    +jwt_refresh_token_expires: int
+    +database_url: str
+    +pool_size: int
+    +max_overflow: int
+    +pool_pre_ping: bool
+    +rate_limit_storage_url: str
+    +log_level: str
+    +mail_server
+    +mail_port: int
+    +mail_use_tls: bool
+    +mail_username
+    +mail_password
+  }
+
+  class Config {
+    +env_file: str
+    +env_file_encoding: str
+  }
+
+}
+
+package "utils" {
+  class SimpleCache {
+    +entry
+    +current_time
+    +expired_keys
+    --
+    -__init__()
+    +get(key)
+    +set(key, value, ttl)
+    +delete(key)
+    +clear()
+    -_cleanup_if_needed()
+  }
+
+  class CacheManager {
+    +today
+    --
+    +{static} warm_cache()
+    +{static} clear_expired()
+    +{static} get_cache_stats()
+  }
+
+}
+
+package "repositories" {
+  class BaseRepository {
+    +query
+    +query
+    +query
+    +instance
+    +instance
+    +instance
+    --
+    -__init__(model_class)
+    +get_by_id(id)
+    +get_all(limit, offset)
+    +create(data)
+    +update(id, data)
+    +delete(id): bool
+    +count(): int
+    +exists(id): bool
+  }
+
+  class UserRepository {
+    -__init__()
+    +get_by_email(email)
+    +get_by_username(username)
+    +email_exists(email): bool
+    +username_exists(username): bool
+  }
+
+  class WordListRepository {
+    +word_entry
+    +query
+    +query
+    --
+    -__init__()
+    +get_by_word_and_mode(word, game_mode)
+    +is_valid_word(word, game_mode): bool
+    +is_answer_word(word, game_mode): bool
+    +get_answer_words_by_mode(game_mode, limit)
+  }
+
+  class GameSessionRepository {
+    +new_session
+    +query
+    +query
+    --
+    -__init__()
+    +create_new_session(user_id, answer_word, game_mode): GameSession
+    +get_user_sessions_by_mode(user_id, game_mode, limit)
+  }
+
+  class UserStatsRepository {
+    -__init__()
+    +get_by_user_and_mode(user_id, game_mode)
+    +get_leaderboard_by_wins(game_mode, limit)
+    +get_leaderboard_by_streak(game_mode, limit)
+    +get_leaderboard_by_win_percentage(game_mode, min_games, limit)
+    +stats_exist(user_id, game_mode): bool
+  }
+
+}
+
+package "models" {
+  class User {
+    +username
+    +email
+    +password_hash
+    +email_verified
+    +is_active
+    +game_sessions
+    +user_stats
+    +email_pattern: str
+    +salt
+    +result
+    --
+    +validate_email(key, address): str
+    +validate_username(key, username): str
+    +set_password(password)
+    +check_password(password): bool
+    -{static} _validate_password_strength(): bool
+    +to_dict(exclude_sensitive): dict
+    -__repr__(): str
+  }
+
+  class GameMode {
+    +CLASSIC: str
+    +DISNEY: str
+  }
+
+  class WordList {
+    +word
+    +game_mode
+    +is_answer
+    +frequency_rank
+    --
+    +validate_word(key, word): str
+    +validate_frequency_rank(key, rank)
+    -__repr__(): str
+  }
+
+  class GameSession {
+    +user_id
+    +answer_word
+    +game_mode
+    +guesses
+    +completed
+    +won
+    +attempts_used
+    +user
+    +guess_data
+    +new_guesses
+    --
+    +validate_guesses(key, guesses)
+    +validate_attempts_used(key, attempts): int
+    +add_guess(word, feedback)
+    +get_current_guess_count(): int
+    +is_game_over(): bool
+    -__repr__(): str
+  }
+
+  class UserStats {
+    +user_id
+    +game_mode
+    +games_played
+    +games_won
+    +current_streak
+    +max_streak
+    +guess_distribution
+    +user
+    +required_keys
+    +distribution
+    +total_guesses: int
+    --
+    +validate_positive_integers(key, value): int
+    +validate_games_won(key, games_won): int
+    +validate_guess_distribution(key, distribution)
+    +get_win_percentage(): float
+    +update_stats(won, attempts_used)
+    +get_average_guesses(): float
+    -__repr__(): str
+  }
+
+  class TimestampMixin {
+    +created_at
+    +updated_at
+  }
+
+  class SoftDeleteMixin {
+    +deleted_at
+    +is_deleted
+    --
+    +soft_delete()
+  }
+
+  class BaseModel {
+    +id
+    +result
+    +value
+    +value
+    --
+    +to_dict(exclude_sensitive)
+    +update_from_dict(data)
+    -__repr__(): str
+  }
+
+}
+
+package "api" {
+  class RegisterRequest {
+    +username: str
+    +email: str
+    +password: str
+  }
+
+  class LoginRequest {
+    +email: str
+    +password: str
+  }
+
+}
+
+package "services" {
+  class AuthService {
+    +username
+    +email
+    +password
+    +user
+    +created_user
+    +user
+    +success
+    +user
+    +updated_user
+    --
+    -__init__()
+    +register_user(data): User
+    +authenticate_user(email, password): User
+    +get_user_by_id(user_id)
+    +get_user_by_email(email)
+    +verify_email(user_id): bool
+    +change_password(user_id, current_password, new_password): bool
+  }
+
+  class GuessProcessingService {
+    +CORRECT: str
+    +PRESENT: str
+    +ABSENT: str
+    +guess
+    +target
+    +feedback
+    +target_letter_counts
+    +used_target_letters
+    +guess_letter
+    +feedback
+    +letter
+    +best_status: str
+    +status_priority
+    +word
+    +feedback
+    +best_status: status
+    +keyboard_status
+    +alphabet: str
+    +correct_letters
+    +present_letters
+    +absent_letters
+    +guess_set
+    +target_set
+    +common_letters
+    +word
+    +results
+    +won: bool
+    +guess_result
+    +won: bool
+    --
+    -__init__()
+    +process_guess(guess, target_word)
+    +create_guess_result(guess, target_word)
+    +is_winning_guess(feedback): bool
+    +is_valid_word_format(word): bool
+    +get_letter_status(guesses_with_feedback, letter): str
+    +get_keyboard_status(guesses_with_feedback)
+    +analyze_guess_quality(guess, target_word, feedback)
+    -_validate_word(word): bool
+    +simulate_game(target_word, guesses)
+  }
+
+  class DailyPuzzleService {
+    +today
+    +existing
+    +selected_word: word
+    +selected_word
+    +daily_word
+    +created_word
+    +today
+    +today_puzzle
+    +daily_word
+    +answer_words
+    +valid_words
+    +selected
+    +normalized_word
+    +start_date
+    +days_since_start
+    +today
+    +puzzles
+    +puzzle_date
+    +puzzle_info
+    --
+    -__init__()
+    +get_current_date(): date
+    +get_daily_word(puzzle_date, game_mode)
+    +get_today_puzzle(game_mode)
+    +create_daily_word(puzzle_date, game_mode, word)
+    +create_today_puzzle(game_mode, word)
+    +ensure_today_puzzle_exists(game_mode)
+    +get_puzzle_info(puzzle_date, game_mode): dict
+    -_select_random_answer_word(game_mode)
+    -_validate_answer_word(word, game_mode): bool
+    -_calculate_puzzle_number(puzzle_date, game_mode): int
+    +get_puzzle_history(game_mode, limit): list
+  }
+
+  class StatisticsService {
+    +stats
+    +win_percentage
+    +average_guesses
+    +stats
+    +total_games
+    +total_wins
+    +overall_win_percentage
+    +stats_list
+    +stats_list
+    +stats_list
+    +leaderboard
+    +user
+    +entry
+    +all_stats
+    +total_players
+    +total_games
+    +total_wins
+    +global_win_percentage
+    +global_distribution
+    +total_won_games: int
+    +distribution_percentage
+    +total_attempts
+    +average_attempts
+    +user_stats
+    +leaderboard
+    +user_rank: NoneType
+    +user_rank
+    +total_players
+    +percentile
+    +sessions
+    +streak_history
+    +current_streak: int
+    +max_streak: int
+    +temp_streak: int
+    +sorted_sessions
+    +max_streak
+    +temp_streak: int
+    +current_streak: temp_streak
+    --
+    -__init__()
+    +get_user_stats(user_id, game_mode)
+    +get_user_all_stats(user_id)
+    +get_leaderboard(game_mode, metric, limit)
+    +get_global_statistics(game_mode)
+    +get_user_rank(user_id, game_mode, metric)
+    +get_streak_analysis(user_id, game_mode)
+    -_get_default_stats(game_mode)
+    -_calculate_total_guesses(guess_distribution): int
+  }
+
+  class GameService {
+    +answer_words
+    +selected
+    +session
+    +puzzle_date
+    +daily_word
+    +session
+    +puzzle_info
+    +word
+    +session_id
+    +session
+    +answer_word
+    +game_mode
+    +feedback
+    +is_correct
+    +updated_session
+    +result
+    +session
+    +daily_word
+    +is_valid_guess
+    +sessions
+    +history
+    +daily_word
+    +session_data
+    +existing_session
+    +new_session
+    +stats
+    +stats
+    +stats
+    --
+    -__init__()
+    +start_new_game(user_id, game_mode)
+    +get_daily_puzzle(user_id, game_mode, puzzle_date)
+    +process_guess(user_id, guess_data)
+    +get_game_session(user_id, session_id)
+    +validate_word(word, game_mode)
+    +get_user_game_history(user_id, game_mode, limit)
+    -_get_or_create_session(user_id, daily_word_id)
+    -_update_user_stats(user_id, game_mode, won, attempts_used)
+  }
+
+  class WordValidationService {
+    +normalized_word
+    +is_valid
+    +normalized_word
+    +is_answer
+    --
+    -__init__()
+    +is_valid_guess(word, game_mode): bool
+    +is_answer_word(word, game_mode): bool
+    +validate_word_format(word)
+  }
+
+}
+
+/* Inheritance relationships */
+BaseSettings <|-- Settings
+BaseModel <|-- User
+enum.Enum <|-- GameMode
+BaseModel <|-- WordList
+BaseModel <|-- GameSession
+BaseModel <|-- UserStats
+db.Model <|-- BaseModel
+TimestampMixin <|-- BaseModel
+BaseModel <|-- RegisterRequest
+BaseModel <|-- LoginRequest
+
+@enduml

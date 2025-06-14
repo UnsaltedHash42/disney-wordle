@@ -16,67 +16,6 @@ class GameMode(enum.Enum):
     DISNEY = "disney"
 
 
-class DailyWord(BaseModel):
-    """Daily word puzzle for each game mode."""
-    
-    __tablename__ = "daily_words"
-    
-    word = Column(String(5), nullable=False, index=True)
-    game_mode = Column(Enum(GameMode), nullable=False, index=True)
-    date = Column(Date, nullable=False, index=True)
-    
-    # Unique constraint: one word per date per game mode
-    __table_args__ = (
-        UniqueConstraint('date', 'game_mode', name='uix_daily_word_date_mode'),
-        Index('ix_daily_words_date_mode', 'date', 'game_mode'),
-    )
-    
-    # Relationships
-    game_sessions = relationship("GameSession", back_populates="daily_word", cascade="all, delete-orphan")
-    
-    @validates('word')
-    def validate_word(self, key: str, word: str) -> str:
-        """Validate word format.
-        
-        Args:
-            key: Field name being validated
-            word: Word to validate
-            
-        Returns:
-            Validated word in uppercase
-            
-        Raises:
-            ValueError: If word format is invalid
-        """
-        if not word or len(word) != 5:
-            raise ValueError("Word must be exactly 5 characters long")
-        if not word.isalpha():
-            raise ValueError("Word must contain only letters")
-        return word.upper()
-    
-    @validates('date')
-    def validate_date(self, key: str, puzzle_date: date) -> date:
-        """Validate puzzle date.
-        
-        Args:
-            key: Field name being validated
-            puzzle_date: Date to validate
-            
-        Returns:
-            Validated date
-            
-        Raises:
-            ValueError: If date is invalid
-        """
-        if not puzzle_date:
-            raise ValueError("Date is required")
-        return puzzle_date
-    
-    def __repr__(self) -> str:
-        """String representation of daily word."""
-        return f"<DailyWord(date={self.date}, mode={self.game_mode.value}, word='{self.word}')>"
-
-
 class WordList(BaseModel):
     """Word list for game validation and answers."""
     
@@ -138,27 +77,27 @@ class WordList(BaseModel):
 
 
 class GameSession(BaseModel):
-    """Game session tracking user's progress on a daily puzzle."""
+    """Game session tracking user's progress on a puzzle."""
     
     __tablename__ = "game_sessions"
     
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    daily_word_id = Column(Integer, ForeignKey('daily_words.id'), nullable=False, index=True)
-    guesses = Column(JSON, default=list, nullable=False)  # [{word: "HELLO", feedback: ["correct", "absent", ...]}]
+    answer_word = Column(String(5), nullable=False, index=True)  # The answer for this session
+    game_mode = Column(Enum(GameMode), nullable=False, index=True)
+    guesses = Column(JSON, default=list, nullable=False)
     completed = Column(Boolean, default=False, nullable=False, index=True)
     won = Column(Boolean, default=False, nullable=False, index=True)
     attempts_used = Column(Integer, default=0, nullable=False)
     
-    # Unique constraint: one session per user per daily word
+    # Remove unique constraint on (user_id, daily_word_id)
     __table_args__ = (
-        UniqueConstraint('user_id', 'daily_word_id', name='uix_game_session_user_daily'),
         Index('ix_game_sessions_user_completed', 'user_id', 'completed'),
-        Index('ix_game_sessions_daily_word', 'daily_word_id'),
+        Index('ix_game_sessions_answer_word', 'answer_word'),
+        Index('ix_game_sessions_user_created', 'user_id', 'created_at'),
     )
     
     # Relationships
     user = relationship("User", back_populates="game_sessions")
-    daily_word = relationship("DailyWord", back_populates="game_sessions")
     
     @validates('guesses')
     def validate_guesses(self, key: str, guesses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -249,7 +188,7 @@ class GameSession(BaseModel):
     
     def __repr__(self) -> str:
         """String representation of game session."""
-        return f"<GameSession(user_id={self.user_id}, daily_word_id={self.daily_word_id}, won={self.won})>"
+        return f"<GameSession(user_id={self.user_id}, answer_word={self.answer_word}, won={self.won})>"
 
 
 class UserStats(BaseModel):

@@ -1,7 +1,7 @@
 """Authentication API endpoints."""
 
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask import Blueprint, request, jsonify, make_response
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, set_access_cookies, set_refresh_cookies
 from pydantic import BaseModel, ValidationError
 
 from ..services.auth_service import AuthService
@@ -47,11 +47,15 @@ def register():
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        return success_response({
+        # SSR compatibility: set JWTs as HttpOnly cookies
+        resp = make_response(success_response({
             'user': user.to_dict(),
             'access_token': access_token,
             'refresh_token': refresh_token
-        }, status_code=201)
+        }, status_code=201))
+        set_access_cookies(resp, access_token)
+        set_refresh_cookies(resp, refresh_token)
+        return resp
         
     except ValueError as e:
         return error_response(str(e), status_code=400)
@@ -78,11 +82,15 @@ def login():
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        return success_response({
+        # SSR compatibility: set JWTs as HttpOnly cookies
+        resp = make_response(success_response({
             'user': user.to_dict(),
             'access_token': access_token,
             'refresh_token': refresh_token
-        })
+        }))
+        set_access_cookies(resp, access_token)
+        set_refresh_cookies(resp, refresh_token)
+        return resp
         
     except ValueError as e:
         return error_response(str(e), status_code=401)

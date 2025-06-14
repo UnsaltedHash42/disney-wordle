@@ -18,6 +18,7 @@ def app():
     })
     
     with app.app_context():
+        db.drop_all()  # Ensure all tables and indexes are dropped before creating
         db.create_all()
         yield app
         db.session.remove()

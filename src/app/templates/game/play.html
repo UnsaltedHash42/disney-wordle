@@ -3,6 +3,16 @@
 {% block title %}Play - Wordle Clone{% endblock %}
 
 {% block content %}
+{#
+Test Plan for UI/UX & Bug Fixes (Phase 5)
+- Board layout matches official Wordle (tile size, spacing, centering)
+- Keyboard input: no double entry, physical and virtual keys work
+- Mode switching: reliably loads new puzzle, resets state
+- Guess input: only allows valid guesses, disables on complete/loading
+- Animations: flip, pop, shake work as expected
+- Accessibility: ARIA roles, color contrast, keyboard navigation
+- Responsive: works on mobile and desktop
+#}
 <div class="min-h-screen bg-gray-50" x-data="gameController()" x-init="init()">
     <!-- Game header -->
     <div class="bg-white shadow-sm border-b border-gray-200">
@@ -57,14 +67,16 @@
         
         <!-- Game board -->
         <div class="mb-8">
-            <div class="grid grid-rows-6 gap-2 mb-4" id="game-board">
+            <div class="flex flex-col items-center w-full max-w-xs mx-auto select-none" id="game-board" role="grid" aria-label="Wordle game board">
                 <template x-for="(row, rowIndex) in gameBoard" :key="rowIndex">
-                    <div class="grid grid-cols-5 gap-2" :class="{ 'shake-row': shakeRow === rowIndex }">
+                    <div class="flex w-full mb-1 last:mb-0" role="row" :class="{ 'shake-row': shakeRow === rowIndex }">
                         <template x-for="(cell, cellIndex) in row" :key="cellIndex">
-                            <div 
+                            <div
                                 class="tile"
                                 :class="getTileClass(cell, rowIndex, cellIndex)"
                                 x-text="cell.letter"
+                                :aria-label="cell.letter ? cell.letter : 'empty'"
+                                role="gridcell"
                                 :style="cell.delay ? `animation-delay: ${cell.delay}ms` : ''"
                             ></div>
                         </template>
@@ -73,7 +85,7 @@
             </div>
             
             <!-- Game progress indicator -->
-            <div class="flex justify-center space-x-1 mb-4">
+            <div class="flex justify-center space-x-1 mb-4 mt-2">
                 <template x-for="i in 6" :key="i">
                     <div class="w-2 h-2 rounded-full" :class="{
                         'bg-blue-600': currentRow >= i - 1,
@@ -154,9 +166,7 @@
                 </button>
             </div>
             
-            <p class="text-sm text-gray-600">
-                Next puzzle in: <span x-text="timeUntilNextPuzzle" class="font-mono"></span>
-            </p>
+            <button @click="startNewGame()" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors">Play Again</button>
         </div>
     </div>
     
@@ -214,57 +224,48 @@ function gameController() {
         ],
         keyboardStatus: {},
         
-        // Timer
-        timeUntilNextPuzzle: '',
-        nextPuzzleTimer: null,
-        
         async init() {
-            // Set up keyboard listener
-            document.addEventListener('keydown', (e) => this.handlePhysicalKeyPress(e));
-            
-            // Load today's puzzle
-            await this.loadTodaysPuzzle();
-            
-            // Start next puzzle timer
-            this.startNextPuzzleTimer();
+            document.removeEventListener('keydown', this.handlePhysicalKeyPress);
+            document.addEventListener('keydown', this.handlePhysicalKeyPress);
+            await this.startNewGame();
         },
-        
-        async loadTodaysPuzzle() {
+        async startNewGame() {
             this.loading = true;
-            this.loadingMessage = 'Loading today\'s puzzle...';
-            
+            this.loadingMessage = 'Starting new game...';
             try {
-                const response = await WordleApp.apiCall(`/api/game/daily/${this.gameMode}`);
-                
+                const response = await WordleApp.apiCall(`/api/game/new/${this.gameMode}`, { method: 'POST' });
                 if (response.success) {
-                    const { puzzle, session } = response.data;
-                    
+                    const { session } = response.data;
                     this.sessionId = session.id;
-                    this.puzzleNumber = puzzle.puzzle_number;
+                    this.puzzleNumber = null; // No more daily puzzle number
                     this.gameCompleted = session.completed;
                     this.gameWon = session.won;
                     this.currentRow = session.attempts_used;
-                    
-                    // Restore game board from session
+                    this.targetWord = null;
+                    this.gameBoard = Array(6).fill().map(() => Array(5).fill({ letter: '', status: '' }));
+                    this.currentGuess = '';
+                    this.keyboardStatus = {};
                     if (session.guesses && session.guesses.length > 0) {
                         this.restoreGameBoard(session.guesses);
                     }
-                    
-                    // Show completion message if game is already done
                     if (this.gameCompleted) {
-                        this.targetWord = session.guesses.length > 0 ? 
-                            session.guesses[session.guesses.length - 1].target : null;
+                        this.targetWord = session.answer_word;
                         this.showCompletionMessage();
                     }
                 } else {
-                    this.showMessage('Failed to load puzzle: ' + response.error, 'error');
+                    this.showMessage('Failed to start game: ' + response.error, 'error');
                 }
             } catch (error) {
-                console.error('Failed to load puzzle:', error);
-                this.showMessage('Failed to load puzzle. Please try again.', 'error');
+                console.error('Failed to start game:', error);
+                this.showMessage('Failed to start game. Please try again.', 'error');
             } finally {
                 this.loading = false;
             }
+        },
+        async switchMode() {
+            this.loading = true;
+            this.loadingMessage = `Switching to ${this.gameMode} mode...`;
+            await this.startNewGame();
         },
         
         restoreGameBoard(guesses) {
@@ -301,9 +302,9 @@ function gameController() {
         
         handlePhysicalKeyPress(event) {
             if (this.gameCompleted || this.loading) return;
-            
+            // Prevent default to avoid duplicate input
+            event.preventDefault();
             const key = event.key.toUpperCase();
-            
             if (key === 'ENTER') {
                 this.handleKeyPress('ENTER');
             } else if (key === 'BACKSPACE') {
@@ -315,7 +316,7 @@ function gameController() {
         
         handleKeyPress(key) {
             if (this.gameCompleted || this.loading) return;
-            
+            // Only allow input if current row is not completed
             if (key === 'ENTER') {
                 this.submitGuess();
             } else if (key === 'BACKSPACE') {
@@ -326,18 +327,16 @@ function gameController() {
         },
         
         addLetter(letter) {
-            if (this.currentGuess.length < 5) {
+            if (this.currentGuess.length < 5 && !this.gameCompleted && !this.loading) {
                 this.currentGuess += letter;
                 const colIndex = this.currentGuess.length - 1;
-                
                 this.gameBoard[this.currentRow][colIndex] = {
                     letter: letter,
                     status: 'filled'
                 };
-                
                 // Add bounce animation
                 setTimeout(() => {
-                    const tile = document.querySelector(`#game-board .grid:nth-child(${this.currentRow + 1}) .tile:nth-child(${colIndex + 1})`);
+                    const tile = document.querySelector(`#game-board .flex:nth-child(${this.currentRow + 1}) .tile:nth-child(${colIndex + 1})`);
                     if (tile) {
                         tile.classList.add('bounce-tile');
                         setTimeout(() => tile.classList.remove('bounce-tile'), 200);
@@ -457,24 +456,6 @@ function gameController() {
             }, 3000);
         },
         
-        async switchMode() {
-            this.loading = true;
-            this.loadingMessage = `Switching to ${this.gameMode} mode...`;
-            
-            // Reset game state
-            this.gameBoard = Array(6).fill().map(() => Array(5).fill({ letter: '', status: '' }));
-            this.currentGuess = '';
-            this.currentRow = 0;
-            this.gameCompleted = false;
-            this.gameWon = false;
-            this.keyboardStatus = {};
-            this.targetWord = null;
-            this.message = '';
-            
-            // Load new puzzle
-            await this.loadTodaysPuzzle();
-        },
-        
         getTileClass(cell, rowIndex, cellIndex) {
             const classes = ['tile'];
             
@@ -549,29 +530,11 @@ function gameController() {
             });
         },
         
-        startNextPuzzleTimer() {
-            const updateTimer = () => {
-                const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-                tomorrow.setUTCHours(0, 0, 0, 0);
-                
-                const timeLeft = tomorrow - now;
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
-                this.timeUntilNextPuzzle = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            };
-            
-            updateTimer();
-            this.nextPuzzleTimer = setInterval(updateTimer, 1000);
+        startNewGame() {
+            this.startNewGame();
         },
         
         destroy() {
-            if (this.nextPuzzleTimer) {
-                clearInterval(this.nextPuzzleTimer);
-            }
             document.removeEventListener('keydown', this.handlePhysicalKeyPress);
         }
     }

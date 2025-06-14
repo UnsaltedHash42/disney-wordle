@@ -76,6 +76,44 @@
 | T4.2 | Performance testing under load | T4.1 | Complete | docs/notes.md |
 | T4.3 | Security testing and vulnerability scan | T4.2 | Complete | Security review |
 | C4 | **CHECKPOINT 4: Production Ready** | T4.3 | Complete | Full application ready for deployment |
+| **PHASE 5: UI/UX & BUG FIXES** |
+| P5.1 | Redesign game board UI to match official Wordle | C4 | Complete | [src/app/templates/game/play.html] |
+| P5.2 | Fix double key entry from physical keyboard | P5.1 | Complete | [src/app/templates/game/play.html] |
+| P5.3 | Ensure mode switching reliably loads a puzzle | P5.2 | Complete | [src/app/templates/game/play.html] |
+| P5.4 | Fix guess input so guesses can be entered and submitted | P5.3 | Complete | [src/app/templates/game/play.html] |
+| P5.5 | Add automated/manual tests for new UI and bug fixes | P5.4 | Complete | [src/app/templates/game/play.html] |
+| P5.6 | Manual and automated regression testing for all game flows | P5.5 | Complete | tests/ |
+| C5 | **CHECKPOINT 5: UI/UX & Bug Fixes Complete** | P5.6 | Complete | All issues resolved, tests pass |
+| OBJ1 | Make project setup and initialization as easy as possible (single command, pip install if feasible, or one-liner for clone+install+init+seed) | | Pending | |
+| OBJ1.1 | Create a setup script or Makefile for one-command install/init/seed | OBJ1 | Pending | |
+| OBJ1.2 | Investigate pip installability and package structure | OBJ1 | Pending | |
+| OBJ1.3 | Update README with simple setup instructions | OBJ1 | Pending | |
+| OBJ2 | Remove daily puzzle restriction and allow unlimited play | | Pending | |
+| OBJ2.1 | Refactor models: remove DailyWord, update GameSession to reference answer word directly, remove unique constraints | OBJ2 | Pending | |
+| OBJ2.2 | Write and apply database migration for new schema | OBJ2.1 | Pending | |
+| OBJ2.3 | Add /api/game/new/<mode> endpoint for starting a new game with a random word | OBJ2.2 | Pending | |
+| OBJ2.4 | Refactor backend session logic to support unlimited games per user | OBJ2.3 | Pending | |
+| OBJ2.5 | Update frontend to use new endpoint and remove daily logic | OBJ2.4 | Pending | |
+| OBJ2.6 | Add a "Play Again" button to the UI | OBJ2.5 | Pending | |
+| OBJ2.7 | Remove all "next puzzle" and date-based logic from UI | OBJ2.6 | Pending | |
+| OBJ2.8 | Test unlimited play end-to-end | OBJ2.7 | Pending | |
+| OBJ3 | Dramatically expand the word lists for both classic and Disney modes | | Complete | [Disney, Marvel, Star Wars, Parks included] |
+| OBJ3.1 | Fetch and integrate official Wordle answer and guess lists | OBJ3 | Complete | |
+| OBJ3.2 | Scrape and curate Disney/fantasy 5-letter words | OBJ3 | Complete | |
+| OBJ3.3 | Deduplicate and validate all word lists | OBJ3 | Complete | |
+| OBJ3.4 | Update seeding script and re-seed database | OBJ3 | Complete | |
+| OBJ4 | Ensure robust documentation for setup, seeding, and troubleshooting | | Complete | |
+| OBJ4.1 | Update README with clear setup, seeding, and troubleshooting steps | OBJ4 | Complete | |
+| OBJ5 | Manual QA and UI/UX polish | | Complete | |
+| OBJ6 | Automated test DB/index bug | | Pending | [Known issue, see README] |
+| CRIT1 | Fix ongoing problem of not being able to load a puzzle (ensure new game always works, robust error handling, and clear user feedback) | | In Progress | [High] |
+| MIG1 | Write and apply database migration for unlimited play schema | | Complete | |
+| MIG2 | Ensure robust word list seeding for both modes | MIG1 | Complete | |
+| SETUP1 | Create a one-liner setup script for install, migration, and seeding | MIG2 | Complete | |
+| SETUP2 | Update README/setup docs for new onboarding | SETUP1 | Pending | |
+| TEST1 | Add/verify automated tests for setup, seeding, and game logic | SETUP2 | Pending | |
+| QA1 | Manual QA for all flows (login, play, play again, mode switch, error handling) | TEST1 | Pending | |
+| POLISH1 | Polish UI/UX and finalize documentation | QA1 | Pending | |
 
 ## Progress Tracking
 

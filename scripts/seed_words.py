@@ -58,95 +58,110 @@ class WordListSeeder:
     
     def load_word_lists(self) -> Dict[str, Dict[str, List[str]]]:
         """Load word lists from files or return defaults."""
-        # Default word lists (curated for the game)
-        classic_answers = [
-            "ABOUT", "ABOVE", "ABUSE", "ACTOR", "ACUTE", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN",
-            "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIEN", "ALIGN", "ALIKE", "ALIVE",
-            "ALLOW", "ALONE", "ALONG", "ALTER", "ANGEL", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE",
-            "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID",
-            "AWAKE", "AWARD", "AWARE", "BADLY", "BAKER", "BASES", "BASIC", "BEACH", "BEGAN", "BEGIN",
-            "BEING", "BELOW", "BENCH", "BIRTH", "BLACK", "BLAME", "BLANK", "BLAST", "BLIND", "BLOCK",
-            "BLOOD", "BOARD", "BOAST", "BOATS", "BONDS", "BONUS", "BOOST", "BOOTH", "BOUND", "BRAIN",
-            "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED", "BRIEF", "BRING", "BROAD", "BROKE",
-            "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR",
-            "CHAOS", "CHARM", "CHART", "CHASE", "CHEAP", "CHECK", "CHEST", "CHIEF", "CHILD", "CHINA",
-            "CHOSE", "CIVIL", "CLAIM", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLIMB", "CLOCK", "CLOSE",
-            "CLOUD", "COACH", "COAST", "COULD", "COUNT", "COURT", "COVER", "CRAFT", "CRASH", "CRAZY",
-            "CREAM", "CRIME", "CROSS", "CROWD", "CROWN", "CRUDE", "CURVE", "CYCLE", "DAILY", "DANCE",
-            "DATED", "DEALT", "DEATH", "DEBUT", "DELAY", "DEPTH", "DOING", "DOUBT", "DOZEN", "DRAFT",
-            "DRAMA", "DRANK", "DRAWN", "DREAM", "DRESS", "DRILL", "DRINK", "DRIVE", "DROVE", "DYING",
-            "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY",
-            "EQUAL", "ERROR", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT",
-            "FIBER", "FIELD", "FIFTH", "FIFTY", "FIGHT", "FINAL", "FIRST", "FIXED", "FLASH", "FLEET",
-            "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND", "FRAME", "FRANK",
-            "FRAUD", "FRESH", "FRONT", "FROST", "FRUIT", "FULLY", "FUNNY", "GIANT", "GIVEN", "GLASS",
-            "GLOBE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRASS", "GRAVE", "GREAT", "GREEN",
-            "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HAPPY", "HEART", "HEAVY",
-            "HENCE", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX", "INNER", "INPUT",
-            "ISSUE", "JAPAN", "JIMMY", "JOINT", "JONES", "JUDGE", "KNOWN", "LABEL", "LARGE", "LASER",
-            "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LEWIS",
-            "LIGHT", "LIMIT", "LINKS", "LIVES", "LOCAL", "LOOSE", "LOWER", "LUCKY", "LUNCH", "LYING",
-            "MAGIC", "MAJOR", "MAKER", "MARCH", "MARIA", "MATCH", "MAYBE", "MAYOR", "MEANT", "MEDIA",
-            "METAL", "MIGHT", "MINOR", "MINUS", "MIXED", "MODEL", "MONEY", "MONTH", "MORAL", "MOTOR",
-            "MOUNT", "MOUSE", "MOUTH", "MOVED", "MOVIE", "MUSIC", "NEEDS", "NEVER", "NEWLY", "NIGHT",
-            "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCCUR", "OCEAN", "OFFER", "OFTEN", "ORDER",
-            "OTHER", "OUGHT", "PAINT", "PANEL", "PAPER", "PARTY", "PEACE", "PETER", "PHASE", "PHONE",
-            "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE",
-            "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE",
-            "PROOF", "PROUD", "PROVE", "QUEEN", "QUICK", "QUIET", "QUITE", "RADIO", "RAISE", "RANGE",
-            "RAPID", "RATIO", "REACH", "READY", "REALM", "REBEL", "REFER", "RELAX", "REPAY", "REPLY",
-            "RIGHT", "RIGID", "RIVAL", "RIVER", "ROBIN", "ROGER", "ROMAN", "ROUGH", "ROUND", "ROUTE",
-            "ROYAL", "RURAL", "SCALE", "SCENE", "SCOPE", "SCORE", "SENSE", "SERVE", "SETUP", "SEVEN",
-            "SHALL", "SHAPE", "SHARE", "SHARP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT",
-            "SHOCK", "SHOOT", "SHORT", "SHOWN", "SIGHT", "SIMON", "SIXTH", "SIXTY", "SIZED", "SKILL",
-            "SLEEP", "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY",
-            "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPENT", "SPLIT", "SPOKE",
-            "SPORT", "STAFF", "STAGE", "STAKE", "STAND", "START", "STATE", "STEAM", "STEEL", "STEEP",
-            "STEER", "STEVE", "STICK", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY",
-            "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET", "TABLE",
-            "TAKEN", "TASTE", "TAXES", "TEACH", "TEENS", "TEETH", "TERRY", "TEXAS", "THANK", "THEFT",
-            "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE",
-            "THREW", "THROW", "THUMB", "TIGER", "TIGHT", "TIRED", "TITLE", "TODAY", "TOPIC", "TOTAL",
-            "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIN", "TREAT", "TREND", "TRIAL", "TRIBE",
-            "TRICK", "TRIED", "TRIES", "TRUCK", "TRULY", "TRUNK", "TRUST", "TRUTH", "TWICE", "UNCLE",
-            "UNDUE", "UNION", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID",
-            "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOCAL", "VOICE", "WASTE", "WATCH", "WATER",
-            "WAVES", "WEIRD", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN",
-            "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WRITE", "WRONG", "WROTE",
-            "YOUNG", "YOUTH"
-        ]
+        def load_words_from_file(path):
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    words = [w.strip().upper() for w in f if w.strip()]
+                return [w for w in words if len(w) == 5 and w.isalpha()]
+            return []
+        # Try to load official lists for classic mode
+        classic_answers = load_words_from_file('data/wordle_answers.txt')
+        classic_guesses = load_words_from_file('data/wordle_guesses.txt')
+        # Fallback to hardcoded if files missing or empty
+        if not classic_answers:
+            classic_answers = [
+                "ABOUT", "ABOVE", "ABUSE", "ACTOR", "ACUTE", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN",
+                "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIEN", "ALIGN", "ALIKE", "ALIVE",
+                "ALLOW", "ALONE", "ALONG", "ALTER", "ANGEL", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE",
+                "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID",
+                "AWAKE", "AWARD", "AWARE", "BADLY", "BAKER", "BASES", "BASIC", "BEACH", "BEGAN", "BEGIN",
+                "BEING", "BELOW", "BENCH", "BIRTH", "BLACK", "BLAME", "BLANK", "BLAST", "BLIND", "BLOCK",
+                "BLOOD", "BOARD", "BOAST", "BOATS", "BONDS", "BONUS", "BOOST", "BOOTH", "BOUND", "BRAIN",
+                "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED", "BRIEF", "BRING", "BROAD", "BROKE",
+                "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR",
+                "CHAOS", "CHARM", "CHART", "CHASE", "CHEAP", "CHECK", "CHEST", "CHIEF", "CHILD", "CHINA",
+                "CHOSE", "CIVIL", "CLAIM", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLIMB", "CLOCK", "CLOSE",
+                "CLOUD", "COACH", "COAST", "COULD", "COUNT", "COURT", "COVER", "CRAFT", "CRASH", "CRAZY",
+                "CREAM", "CRIME", "CROSS", "CROWD", "CROWN", "CRUDE", "CURVE", "CYCLE", "DAILY", "DANCE",
+                "DATED", "DEALT", "DEATH", "DEBUT", "DELAY", "DEPTH", "DOING", "DOUBT", "DOZEN", "DRAFT",
+                "DRAMA", "DRANK", "DRAWN", "DREAM", "DRESS", "DRILL", "DRINK", "DRIVE", "DROVE", "DYING",
+                "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY",
+                "EQUAL", "ERROR", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT",
+                "FIBER", "FIELD", "FIFTH", "FIFTY", "FIGHT", "FINAL", "FIRST", "FIXED", "FLASH", "FLEET",
+                "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND", "FRAME", "FRANK",
+                "FRAUD", "FRESH", "FRONT", "FROST", "FRUIT", "FULLY", "FUNNY", "GIANT", "GIVEN", "GLASS",
+                "GLOBE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRASS", "GRAVE", "GREAT", "GREEN",
+                "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HAPPY", "HEART", "HEAVY",
+                "HENCE", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX", "INNER", "INPUT",
+                "ISSUE", "JAPAN", "JIMMY", "JOINT", "JONES", "JUDGE", "KNOWN", "LABEL", "LARGE", "LASER",
+                "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LEWIS",
+                "LIGHT", "LIMIT", "LINKS", "LIVES", "LOCAL", "LOOSE", "LOWER", "LUCKY", "LUNCH", "LYING",
+                "MAGIC", "MAJOR", "MAKER", "MARCH", "MARIA", "MATCH", "MAYBE", "MAYOR", "MEANT", "MEDIA",
+                "METAL", "MIGHT", "MINOR", "MINUS", "MIXED", "MODEL", "MONEY", "MONTH", "MORAL", "MOTOR",
+                "MOUNT", "MOUSE", "MOUTH", "MOVED", "MOVIE", "MUSIC", "NEEDS", "NEVER", "NEWLY", "NIGHT",
+                "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCCUR", "OCEAN", "OFFER", "OFTEN", "ORDER",
+                "OTHER", "OUGHT", "PAINT", "PANEL", "PAPER", "PARTY", "PEACE", "PETER", "PHASE", "PHONE",
+                "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE",
+                "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE",
+                "PROOF", "PROUD", "PROVE", "QUEEN", "QUICK", "QUIET", "QUITE", "RADIO", "RAISE", "RANGE",
+                "RAPID", "RATIO", "REACH", "READY", "REALM", "REBEL", "REFER", "RELAX", "REPAY", "REPLY",
+                "RIGHT", "RIGID", "RIVAL", "RIVER", "ROBIN", "ROGER", "ROMAN", "ROUGH", "ROUND", "ROUTE",
+                "ROYAL", "RURAL", "SCALE", "SCENE", "SCOPE", "SCORE", "SENSE", "SERVE", "SETUP", "SEVEN",
+                "SHALL", "SHAPE", "SHARE", "SHARP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT",
+                "SHOCK", "SHOOT", "SHORT", "SHOWN", "SIGHT", "SIMON", "SIXTH", "SIXTY", "SIZED", "SKILL",
+                "SLEEP", "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY",
+                "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPENT", "SPLIT", "SPOKE",
+                "SPORT", "STAFF", "STAGE", "STAKE", "STAND", "START", "STATE", "STEAM", "STEEL", "STEEP",
+                "STEER", "STEVE", "STICK", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY",
+                "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET", "TABLE",
+                "TAKEN", "TASTE", "TAXES", "TEACH", "TEENS", "TEETH", "TERRY", "TEXAS", "THANK", "THEFT",
+                "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE",
+                "THREW", "THROW", "THUMB", "TIGER", "TIGHT", "TIRED", "TITLE", "TODAY", "TOPIC", "TOTAL",
+                "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIN", "TREAT", "TREND", "TRIAL", "TRIBE",
+                "TRICK", "TRIED", "TRIES", "TRUCK", "TRULY", "TRUNK", "TRUST", "TRUTH", "TWICE", "UNCLE",
+                "UNDUE", "UNION", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID",
+                "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOCAL", "VOICE", "WASTE", "WATCH", "WATER",
+                "WAVES", "WEIRD", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN",
+                "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WRITE", "WRONG", "WROTE",
+                "YOUNG", "YOUTH"
+            ]
+        if not classic_guesses:
+            classic_guesses = [
+                "AAHED", "AALII", "AARGH", "ABACA", "ABACI", "ABACS", "ABAFT", "ABAKA", "ABAMP", "ABAND",
+                "ABASH", "ABASK", "ABATE", "ABAYA", "ABBAS", "ABBED", "ABBES", "ABBEY", "ABBOT", "ABCEE",
+                "ABEAM", "ABEAR", "ABELE", "ABERS", "ABETS", "ABHOR", "ABIDE", "ABLED", "ABLER", "ABLES",
+                "ABLET", "ABLOW", "ABMHO", "ABODE", "ABOHM", "ABOIL", "ABOMA", "ABOON", "ABORD", "ABORE",
+                "ABORT", "ABOTT", "ABOUL", "ABRAY", "ABRED", "ABRIM", "ABRIN", "ABRIS", "ABSEY", "ABSIT",
+                "ABUNA", "ABUNE", "ABUTS", "ABUZZ", "ABYES", "ABYSM", "ABYSS", "ACAIS", "ACARI", "ACEDY",
+                "ACERS", "ACHES", "ACHEY", "ACIDS", "ACIDY", "ACING", "ACINI", "ACKEE", "ACKER", "ACMES",
+                "ACMIC", "ACNED", "ACNES", "ACOCK", "ACOLD", "ACORN", "ACRED", "ACRES", "ACRID", "ACROS",
+                "ACTED", "ACTIN", "ACTON", "ACUAN", "ACYLS", "ADAGE", "ADAPT", "ADDAX", "ADDED", "ADDER",
+                "ADDIO", "ADDLE", "ADEEM", "ADEPT", "ADHAN", "ADIEU", "ADIOS", "ADITS", "ADMAN", "ADMIN"
+            ]
         
-        classic_guesses = [
-            "AAHED", "AALII", "AARGH", "ABACA", "ABACI", "ABACS", "ABAFT", "ABAKA", "ABAMP", "ABAND",
-            "ABASH", "ABASK", "ABATE", "ABAYA", "ABBAS", "ABBED", "ABBES", "ABBEY", "ABBOT", "ABCEE",
-            "ABEAM", "ABEAR", "ABELE", "ABERS", "ABETS", "ABHOR", "ABIDE", "ABLED", "ABLER", "ABLES",
-            "ABLET", "ABLOW", "ABMHO", "ABODE", "ABOHM", "ABOIL", "ABOMA", "ABOON", "ABORD", "ABORE",
-            "ABORT", "ABOTT", "ABOUL", "ABRAY", "ABRED", "ABRIM", "ABRIN", "ABRIS", "ABSEY", "ABSIT",
-            "ABUNA", "ABUNE", "ABUTS", "ABUZZ", "ABYES", "ABYSM", "ABYSS", "ACAIS", "ACARI", "ACEDY",
-            "ACERS", "ACHES", "ACHEY", "ACIDS", "ACIDY", "ACING", "ACINI", "ACKEE", "ACKER", "ACMES",
-            "ACMIC", "ACNED", "ACNES", "ACOCK", "ACOLD", "ACORN", "ACRED", "ACRES", "ACRID", "ACROS",
-            "ACTED", "ACTIN", "ACTON", "ACUAN", "ACYLS", "ADAGE", "ADAPT", "ADDAX", "ADDED", "ADDER",
-            "ADDIO", "ADDLE", "ADEEM", "ADEPT", "ADHAN", "ADIEU", "ADIOS", "ADITS", "ADMAN", "ADMIN"
-        ]
-        
-        disney_answers = [
-            "ARIEL", "BELLE", "BEAST", "SIMBA", "WOODY", "BUZZY", "GENIE", "STICH", "PUMBA", "TIMON", 
-            "GOOFY", "PLUTO", "BAMBI", "DUMBO", "ALICE", "QUEEN", "MARCH", "WHITE", "HEART", "SPADE", 
-            "MAGIC", "SPELL", "FAIRY", "DREAM", "BRAVE", "MOANA", "OCEAN", "BEACH", "SHELL", "PEARL", 
-            "CORAL", "SHARK", "WHALE", "SWORD", "CROWN", "TOWER", "LIGHT", "WATER", "EARTH", "GHOST", 
-            "DEMON", "ANGEL", "DEVIL", "SAINT", "ROYAL", "THROW", "APPLE", "GRAPE", "LEMON", "PEACH", 
-            "MANGO", "SWEET", "FRESH", "YOUNG", "SMALL", "LARGE", "THICK", "QUICK", "QUIET", "CLEAN", 
-            "SHARP", "SMILE", "HAPPY", "LUCKY", "HONOR", "TRUST", "PEACE", "DANCE", "MUSIC", "LAUGH", 
-            "CHARM", "GRACE", "POWER", "FROST", "FLAME", "STONE", "JEWEL"
-        ]
-        
-        disney_guesses = [
-            "AGRAB", "COCO", "FLYNN", "HANS", "JAFAR", "MULAN", "RALPH", "TIANA", "WENDY", "ZAZU",
-            "BAYOU", "CHILD", "EMOJI", "JOKER", "KNIFE", "MERCY", "NOBLE", "OASIS", "PARTY", "RIDER",
-            "TITAN", "ULTRA", "VIGOR", "WITCH", "YACHT", "ARMOR", "BLAZE", "CLOUD", "EAGLE", "GIANT",
-            "HAVEN", "IVORY", "JOUST", "KNAVE", "LANCE", "MANOR", "NORTH", "OPTIC", "PATCH", "QUAKE",
-            "REALM", "STORM", "TOOTH", "UNITE", "VENOM", "WHEAT", "XERUS"
-        ]
+        # Try to load expanded Disney list from file
+        disney_words = load_words_from_file('data/disney_words.txt')
+        if disney_words:
+            disney_answers = disney_words
+            disney_guesses = disney_words
+        else:
+            disney_answers = [
+                "ARIEL", "BELLE", "BEAST", "SIMBA", "WOODY", "BUZZY", "GENIE", "STICH", "PUMBA", "TIMON", 
+                "GOOFY", "PLUTO", "BAMBI", "DUMBO", "ALICE", "QUEEN", "MARCH", "WHITE", "HEART", "SPADE", 
+                "MAGIC", "SPELL", "FAIRY", "DREAM", "BRAVE", "MOANA", "OCEAN", "BEACH", "SHELL", "PEARL", 
+                "CORAL", "SHARK", "WHALE", "SWORD", "CROWN", "TOWER", "LIGHT", "WATER", "EARTH", "GHOST", 
+                "DEMON", "ANGEL", "DEVIL", "SAINT", "ROYAL", "THROW", "APPLE", "GRAPE", "LEMON", "PEACH", 
+                "MANGO", "SWEET", "FRESH", "YOUNG", "SMALL", "LARGE", "THICK", "QUICK", "QUIET", "CLEAN", 
+                "SHARP", "SMILE", "HAPPY", "LUCKY", "HONOR", "TRUST", "PEACE", "DANCE", "MUSIC", "LAUGH", 
+                "CHARM", "GRACE", "POWER", "FROST", "FLAME", "STONE", "JEWEL"
+            ]
+            disney_guesses = [
+                "AGRAB", "COCO", "FLYNN", "HANS", "JAFAR", "MULAN", "RALPH", "TIANA", "WENDY", "ZAZU",
+                "BAYOU", "CHILD", "EMOJI", "JOKER", "KNIFE", "MERCY", "NOBLE", "OASIS", "PARTY", "RIDER",
+                "TITAN", "ULTRA", "VIGOR", "WITCH", "YACHT", "ARMOR", "BLAZE", "CLOUD", "EAGLE", "GIANT",
+                "HAVEN", "IVORY", "JOUST", "KNAVE", "LANCE", "MANOR", "NORTH", "OPTIC", "PATCH", "QUAKE",
+                "REALM", "STORM", "TOOTH", "UNITE", "VENOM", "WHEAT", "XERUS"
+            ]
         
         return {
             'classic': {

@@ -1,0 +1,65 @@
+app
+├── api
+│   ├── __init__.py
+│   ├── auth.py
+│   ├── game.py
+│   ├── health.py
+│   └── stats.py
+├── config
+│   ├── __init__.py
+│   └── settings.py
+├── database
+│   ├── __init__.py
+│   ├── connection.py
+│   └── indexes.py
+├── docs
+│   └── uml.txt
+├── middleware
+│   ├── __init__.py
+│   ├── rate_limiting.py
+│   └── security.py
+├── models
+│   ├── __init__.py
+│   ├── base.py
+│   ├── game.py
+│   └── user.py
+├── repositories
+│   ├── __init__.py
+│   ├── base_repository.py
+│   ├── game_repository.py
+│   └── user_repository.py
+├── routes
+│   ├── __init__.py
+│   └── main.py
+├── services
+│   ├── __init__.py
+│   ├── auth_service.py
+│   ├── daily_puzzle_service.py
+│   ├── game_service.py
+│   ├── guess_processing_service.py
+│   ├── statistics_service.py
+│   └── word_validation_service.py
+├── static
+├── templates
+│   ├── auth
+│   │   ├── login.html
+│   │   └── register.html
+│   ├── components
+│   │   ├── instructions-modal.html
+│   │   └── stats-modal.html
+│   ├── game
+│   │   ├── history.html
+│   │   ├── play.html
+│   │   └── stats.html
+│   └── base.html
+├── utils
+│   ├── __init__.py
+│   ├── caching.py
+│   ├── responses.py
+│   └── validation.py
+└── __init__.py
+
+Statistics:
+- Files: 44
+- Directories: 15
+- Total items: 59

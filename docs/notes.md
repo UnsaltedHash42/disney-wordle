@@ -59,6 +59,37 @@ Decision to build a Wordle clone with dual game modes (Classic/Disney) using Fla
 **Solution**: JSON field storing guess count distribution with service layer calculations
 **Impact**: Flexible stats storage enabling rich analytics and leaderboard features
 
+[2025-06-13]
+**Challenge**: Game board UI does not match official Wordle (tile layout, spacing, animations)
+**Solution**: Redesign the game board and keyboard components to closely mimic Wordle's look and feel, including tile flip animations and spacing.
+**Impact**: Improved user experience and visual familiarity.
+
+[2025-06-13]
+**Challenge**: Double key entry when using physical keyboard
+**Solution**: Refactor Alpine.js keyboard event handling to prevent duplicate input events.
+**Impact**: Accurate and responsive keyboard input.
+
+[2025-06-13]
+**Challenge**: Mode switching sometimes fails to load puzzle
+**Solution**: Add robust state management and error handling for mode switching and puzzle loading.
+**Impact**: Reliable mode switching and puzzle availability.
+
+[2025-06-13]
+**Challenge**: Cannot enter guesses in the game
+**Solution**: Debug and fix input handling and guess submission logic in Alpine.js and backend API.
+**Impact**: Game is fully playable.
+
+[2025-06-13] Completed Phase 5: UI/UX & Bug Fixes - Implemented in src/app/templates/game/play.html
+- Redesigned game board to match official Wordle (tile layout, spacing, animations)
+- Fixed double key entry from physical keyboard
+- Ensured mode switching reliably loads a puzzle
+- Fixed guess input logic and UI disabling
+- Added ARIA roles and improved accessibility
+- Updated test plan for manual/automated QA
+Impact: Improved user experience, accessibility, and reliability. See src/app/templates/game/play.html for details.
+
+[2025-06-13] Decision to finalize unlimited play and robust word lists (Classic, Disney, Marvel, Star Wars, Parks) for production. Generated fresh UML, tree, and module function docs. Automated test DB index errors deferred for now (see README troubleshooting).
+
 ## Implementation Priorities
 
 ### Phase 1 - Foundation [2024-12-19]

@@ -374,3 +374,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **🎉 Ready to play? Visit http://127.0.0.1:8000 and start your Wordle journey!**
+
+## Features
+- Unlimited play (no daily restriction)
+- Dual game modes: Classic (official Wordle lists) and Disney (Disney, Marvel, Star Wars, Parks)
+- JWT authentication, statistics, leaderboards
+- Color-blind and mobile accessible
+- Robust database seeding and migration scripts
+
+## Manual QA Checklist
+1. Register and log in as a new user
+2. Play a game in Classic mode (try valid/invalid guesses)
+3. Play a game in Disney mode (try themed words)
+4. Switch modes and play again
+5. Check statistics and leaderboards
+6. Test on mobile and desktop
+7. Try color-blind mode
+
+## Troubleshooting
+- **Port in use**: Stop other Flask servers or use `--port=8000`
+- **CSP/Alpine.js**: For local dev, allow `'unsafe-eval'` in CSP
+- **DB seeding**: Run `python scripts/seed_words.py` after migrations
+- **Testing**: Some automated tests may fail due to SQLite index bug (see `tests/conftest.py`)

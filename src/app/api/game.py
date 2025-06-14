@@ -320,3 +320,32 @@ def get_game_status(game_mode: str):
     except Exception as e:
         logger.error(f"Error getting game status for mode {game_mode}: {e}")
         return error_response("Internal server error", status_code=500)
+
+
+@game_bp.route('/new/<game_mode>', methods=['POST'])
+@jwt_required()
+def start_new_game(game_mode: str):
+    """Start a new game session for the user with a random answer word (unlimited play).
+    Args:
+        game_mode: Game mode ('classic' or 'disney')
+    Returns:
+        JSON response with new session information
+    """
+    try:
+        # Validate game mode
+        try:
+            mode = GameMode(game_mode.lower())
+        except ValueError:
+            return error_response("Invalid game mode. Must be 'classic' or 'disney'", status_code=400)
+        # Get user ID from JWT token
+        current_user_id = get_jwt_identity()
+        user_id = int(current_user_id)
+        # Start new game
+        result = game_service.start_new_game(user_id, mode)
+        if result['success']:
+            return success_response(result)
+        else:
+            return error_response(result.get('error', 'Failed to start new game'), status_code=500)
+    except Exception as e:
+        logger.error(f"Error starting new game for mode {game_mode}: {e}")
+        return error_response("Internal server error", status_code=500)

@@ -43,10 +43,10 @@ class SecurityMiddleware:
             'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1; mode=block',
             
-            # Content Security Policy
+            # Content Security Policy (TEMP: allow 'unsafe-eval' for Alpine.js dev)
             'Content-Security-Policy': (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com; "
                 "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
                 "font-src 'self' https:; "
                 "img-src 'self' data: https:; "

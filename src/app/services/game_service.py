@@ -4,9 +4,8 @@ import logging
 from datetime import date
 from typing import Optional, Dict, Any, List
 
-from ..models.game import GameMode, DailyWord, GameSession, UserStats
-from ..repositories.game_repository import DailyWordRepository, GameSessionRepository, UserStatsRepository
-from .daily_puzzle_service import DailyPuzzleService
+from ..models.game import GameMode, GameSession, UserStats
+from ..repositories.game_repository import GameSessionRepository, UserStatsRepository, WordListRepository
 from .guess_processing_service import GuessProcessingService
 from .word_validation_service import WordValidationService
 
@@ -14,17 +13,38 @@ logger = logging.getLogger(__name__)
 
 
 class GameService:
-    """Main service orchestrating all game logic."""
+    """Main service orchestrating all game logic (unlimited play)."""
     
     def __init__(self):
         """Initialize game service with all dependencies."""
-        self.daily_word_repo = DailyWordRepository()
         self.session_repo = GameSessionRepository()
         self.stats_repo = UserStatsRepository()
-        
-        self.daily_puzzle_service = DailyPuzzleService()
+        self.word_list_repo = WordListRepository()
         self.guess_processor = GuessProcessingService()
         self.word_validator = WordValidationService()
+    
+    def start_new_game(self, user_id: int, game_mode: GameMode) -> Dict[str, Any]:
+        """Start a new game session for a user with a random answer word."""
+        # Select a random answer word
+        answer_words = self.word_list_repo.get_answer_words_by_mode(game_mode)
+        if not answer_words:
+            return {'success': False, 'error': 'No answer words available'}
+        import random
+        selected = random.choice(answer_words)
+        session = self.session_repo.create_new_session(user_id, selected.word, game_mode)
+        return {
+            'success': True,
+            'session': {
+                'id': session.id,
+                'answer_word': session.answer_word,
+                'game_mode': session.game_mode.value,
+                'guesses': session.guesses,
+                'completed': session.completed,
+                'won': session.won,
+                'attempts_used': session.attempts_used,
+                'max_attempts': 6
+            }
+        }
     
     def get_daily_puzzle(self, user_id: int, game_mode: GameMode, puzzle_date: Optional[date] = None) -> Dict[str, Any]:
         """Get or create daily puzzle and user session.
@@ -88,51 +108,29 @@ class GameService:
             }
     
     def process_guess(self, user_id: int, guess_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a user's guess and update game state.
-        
-        Args:
-            user_id: User ID
-            guess_data: Dictionary containing guess information
-                - word: The guessed word
-                - session_id: Game session ID
-                
-        Returns:
-            Dictionary with guess result and updated game state
-        """
+        """Process a user's guess and update game state (unlimited play)."""
         try:
-            # Validate input
             word = guess_data.get('word', '').strip().upper()
             session_id = guess_data.get('session_id')
-            
             if not word or not session_id:
                 return {
                     'success': False,
                     'error': 'Word and session_id are required'
                 }
-            
-            # Get game session
             session = self.session_repo.get_by_id(session_id)
             if not session or session.user_id != user_id:
                 return {
                     'success': False,
                     'error': 'Invalid session'
                 }
-            
-            # Check if game is already over
             if session.is_game_over():
                 return {
                     'success': False,
                     'error': 'Game is already completed'
                 }
-            
-            # Get daily word
-            daily_word = self.daily_word_repo.get_by_id(session.daily_word_id)
-            if not daily_word:
-                return {
-                    'success': False,
-                    'error': 'Daily word not found'
-                }
-            
+            # Use answer_word and game_mode from session
+            answer_word = session.answer_word
+            game_mode = session.game_mode
             # Validate word format
             is_valid_format, format_error = self.word_validator.validate_word_format(word)
             if not is_valid_format:
@@ -140,44 +138,29 @@ class GameService:
                     'success': False,
                     'error': format_error
                 }
-            
-            # Validate word exists in word list
-            if not self.word_validator.is_valid_guess(word, daily_word.game_mode):
+            if not self.word_validator.is_valid_guess(word, game_mode):
                 return {
                     'success': False,
                     'error': 'Word not in word list'
                 }
-            
-            # Process the guess
-            feedback = self.guess_processor.process_guess(word, daily_word.word)
+            feedback = self.guess_processor.process_guess(word, answer_word)
             is_correct = self.guess_processor.is_winning_guess(feedback)
-            
-            # Update session
             session.add_guess(word, feedback)
-            
-            # Check if game is complete
             if is_correct or session.get_current_guess_count() >= 6:
                 session.completed = True
                 session.won = is_correct
-                
-                # Update user statistics
-                self._update_user_stats(user_id, daily_word.game_mode, session.won, session.attempts_used)
-            
-            # Save session
+                self._update_user_stats(user_id, game_mode, session.won, session.attempts_used)
             updated_session = self.session_repo.update(session.id, {
                 'guesses': session.guesses,
                 'completed': session.completed,
                 'won': session.won,
                 'attempts_used': session.attempts_used
             })
-            
             if not updated_session:
                 return {
                     'success': False,
                     'error': 'Failed to update session'
                 }
-            
-            # Prepare response
             result = {
                 'success': True,
                 'guess': {
@@ -194,13 +177,9 @@ class GameService:
                     'attempts_remaining': 6 - session.attempts_used
                 }
             }
-            
-            # Add target word if game is complete
             if session.completed:
-                result['target_word'] = daily_word.word
-            
+                result['target_word'] = answer_word
             return result
-            
         except Exception as e:
             logger.error(f"Error processing guess for user {user_id}: {e}")
             return {
